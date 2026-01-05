@@ -19,3 +19,7 @@ export function deleteUser(data) {
 export function forceLogout(data) {
     return request.post('/user/forceLogout', data)
 }
+
+export function isUserInActive() {
+    return request.get('/user/isUserInActive')
+}

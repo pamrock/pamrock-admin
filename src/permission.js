@@ -5,17 +5,18 @@ import { hasToken, isTokenExpired } from '@/utils/auth'
 import { ElMessage } from 'element-plus'
 
 // 路由前置守卫
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
   const hasTokenFlag = hasToken()
 
   // 已登录的情况
   if (hasTokenFlag) {
-    if (isTokenExpired()) {
-      // 如果 Token 已过期
+    // 验证 Token 是否有效
+    const expired = await isTokenExpired()
+    if (expired) {
+      // 如果 Token 已失效
       userStore.logout()
-      ElMessage.error('登录已过期，请重新登录')
-      next('/login')
+      next('/login?session=expired')
     } else {
       // Token 有效
       // 如果是登录页，重定向到首页
@@ -34,7 +35,6 @@ router.beforeEach((to, from, next) => {
     } else {
       // 其他页面都需要登录
       next('/login')
-      ElMessage.error('请先登录')
     }
   }
 })

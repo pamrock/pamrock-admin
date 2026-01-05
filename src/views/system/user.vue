@@ -219,7 +219,7 @@ const handleCurrentChange = (val) => {
   <div class="user-management">
     <el-card class="box-card mb-20 search-card">
 
-      <el-form :model="searchForm" label-width="80px" class="search-form">
+      <el-form :model="searchForm" label-position="top" class="search-form">
         <el-row :gutter="20">
           <el-col :xs="24" :sm="12" :md="6">
             <el-form-item label="用户名">
@@ -349,7 +349,7 @@ const handleCurrentChange = (val) => {
             {{ formatTime(row.updateTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="140" fixed="right">
+        <el-table-column label="操作" width="170" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="handleEdit(row)">
               编辑

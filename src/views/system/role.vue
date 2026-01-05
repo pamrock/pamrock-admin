@@ -264,11 +264,6 @@ const handleCheckedTreeConnect = (value) => {
 <template>
   <div class="role-management">
     <el-card class="box-card mb-20 search-card">
-      <template #header>
-        <div class="card-header">
-          <span>搜索条件</span>
-        </div>
-      </template>
 
       <el-form :model="searchForm" label-position="top" class="search-form">
         <el-row :gutter="20">

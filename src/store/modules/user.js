@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { setToken, removeToken, getToken, setTimeStamp } from '@/utils/auth'
+import { setToken, removeToken, getToken } from '@/utils/auth'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(getToken())
@@ -14,7 +14,6 @@ export const useUserStore = defineStore('user', () => {
   const login = (newToken) => {
     token.value = newToken
     setToken(newToken)
-    setTimeStamp() // 记录登录时间
   }
 
   // 登出

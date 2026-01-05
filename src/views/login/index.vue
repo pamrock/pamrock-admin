@@ -1,17 +1,24 @@
 <script setup>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/store/modules/user'
 import { ElMessage } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
 import { login } from '@/api/login'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 
 const loginForm = reactive({
   username: '',
   password: ''
+})
+
+onMounted(() => {
+  if (route.query.session === 'expired') {
+    ElMessage.error('登录状态已失效，请重新登录')
+  }
 })
 
 const rules = {
