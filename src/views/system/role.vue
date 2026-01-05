@@ -4,14 +4,17 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { getRoleList, addRole, updateRole, deleteRole, getRoleMenu } from '@/api/role'
 import { getMenuList } from '@/api/menu'
 import { formatTime } from '@/utils/formatool'
+import { ArrowDown, ArrowUp } from '@element-plus/icons-vue'
 
 const loading = ref(false)
 const tableData = ref([])
+const isExpanded = ref(false)
 
 const searchForm = reactive({
   roleName: '',
   roleKey: '',
-  status: ''
+  status: '',
+  createTime: []
 })
 
 const dialogVisible = ref(false)
@@ -54,6 +57,12 @@ const fetchData = async () => {
       pageNo: pagination.currentPage,
       pageSize: pagination.pageSize
     }
+    // 处理时间范围
+    if (params.createTime && params.createTime.length === 2) {
+      params.startTime = params.createTime[0]
+      params.endTime = params.createTime[1]
+    }
+    delete params.createTime
     Object.keys(params).forEach(key => {
       if (params[key] === '' || params[key] === null || params[key] === undefined) {
         delete params[key]
@@ -92,8 +101,14 @@ const handleReset = () => {
   searchForm.roleName = ''
   searchForm.roleKey = ''
   searchForm.status = ''
+  searchForm.createTime = []
   pagination.currentPage = 1
   fetchData()
+}
+
+// 展开/收起
+const toggleExpand = () => {
+  isExpanded.value = !isExpanded.value
 }
 
 const handleAdd = () => {
@@ -248,37 +263,65 @@ const handleCheckedTreeConnect = (value) => {
 
 <template>
   <div class="role-management">
-    <el-card class="box-card mb-20">
+    <el-card class="box-card mb-20 search-card">
       <template #header>
         <div class="card-header">
           <span>搜索条件</span>
         </div>
       </template>
 
-      <el-form :model="searchForm" label-width="80px">
+      <el-form :model="searchForm" label-position="top" class="search-form">
         <el-row :gutter="20">
-          <el-col :xs="24" :sm="12" :md="6">
+          <el-col :span="6">
             <el-form-item label="角色名称">
               <el-input v-model="searchForm.roleName" placeholder="请输入角色名称" clearable @keyup.enter="handleSearch" />
             </el-form-item>
           </el-col>
-          <el-col :xs="24" :sm="12" :md="6">
+          <el-col :span="6">
             <el-form-item label="权限字符">
               <el-input v-model="searchForm.roleKey" placeholder="请输入权限字符" clearable @keyup.enter="handleSearch" />
             </el-form-item>
           </el-col>
-          <el-col :xs="24" :sm="12" :md="6">
+          <el-col :span="6">
             <el-form-item label="状态">
-              <el-select v-model="searchForm.status" placeholder="角色状态" clearable style="width: 100%">
+              <el-select v-model="searchForm.status" placeholder="角色状态" clearable class="w-100">
                 <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :xs="24" :sm="12" :md="6">
-            <el-form-item>
-              <el-button type="primary" @click="handleSearch">搜索</el-button>
-              <el-button @click="handleReset">重置</el-button>
+          <el-col :span="6">
+            <el-form-item label="创建时间">
+              <el-date-picker
+                  v-model="searchForm.createTime"
+                  type="daterange"
+                  range-separator="至"
+                  start-placeholder="开始日期"
+                  end-placeholder="结束日期"
+                  value-format="YYYY-MM-DD"
+                  class="w-100"
+              />
             </el-form-item>
+          </el-col>
+          <template v-if="isExpanded">
+          </template>
+        </el-row>
+        
+        <el-row :gutter="20" class="action-row">
+          <el-col :span="24">
+            <div class="action-container">
+              <div class="left-actions">
+                <el-button type="primary" @click="handleSearch">搜索</el-button>
+                <el-button @click="handleReset">重置</el-button>
+              </div>
+              <div class="right-actions">
+                <el-button link type="primary" @click="toggleExpand">
+                  {{ isExpanded ? '收起' : '展开' }}
+                  <el-icon class="el-icon--right">
+                    <component :is="isExpanded ? ArrowUp : ArrowDown" />
+                  </el-icon>
+                </el-button>
+              </div>
+            </div>
           </el-col>
         </el-row>
       </el-form>
@@ -432,6 +475,28 @@ const handleCheckedTreeConnect = (value) => {
   border: 1px solid #e5e6e7;
   background: #FFFFFF none;
   border-radius: 4px;
+  width: 100%;
+}
+
+.search-form :deep(.el-form-item) {
+  margin-bottom: 0;
+}
+
+.search-card :deep(.el-card__body) {
+  padding-bottom: 15px;
+}
+
+.action-row {
+  margin-top: 15px;
+}
+
+.action-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.w-100 {
   width: 100%;
 }
 </style>

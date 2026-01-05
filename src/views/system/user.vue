@@ -111,6 +111,86 @@ const handleReset = () => {
 const toggleExpand = () => {
   isExpanded.value = !isExpanded.value
 }
+// 新增
+const handleAdd = () => {
+  dialogTitle.value = '新增用户'
+  Object.assign(userForm, {
+    id: null,
+    username: '',
+    email: '',
+    password: '',
+    roleName: '',
+    status: ''
+  })
+  dialogVisible.value = true
+}
+
+// 编辑
+const handleEdit = (row) => {
+  dialogTitle.value = '编辑用户'
+  Object.assign(userForm, row)
+  dialogVisible.value = true
+}
+
+// 删除
+const handleDelete = (row) => {
+  ElMessageBox.confirm('确定要删除该用户吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(async () => {
+    try {
+      Object.assign(userForm, {
+    userId: row.id
+  })
+      const res = await deleteUser(userForm)
+      ElMessage.success(res.data)
+      fetchData()
+    } catch (error) {
+      console.error('删除用户失败:', error)
+    }
+  }).catch(() => {})
+}
+
+// 保存
+const handleSave = async () => {
+  if (!userForm.username) {
+    ElMessage.error('请输入用户名')
+    return
+  }
+
+  // 过滤掉空值参数
+  const data = { ...userForm }
+  Object.keys(data).forEach(key => {
+    if (data[key] === '' || data[key] === null || data[key] === undefined) {
+      delete data[key]
+    }
+  })
+
+  try {
+    if (userForm.id) {
+      const res = await updateUser(data)
+      if (res.success) {
+        ElMessage.success(res.data)
+      } else {
+        ElMessage.error(res.msg)
+      }
+    } else {
+      const res = await addUser(data)
+      ElMessage.success(res.data)
+    }
+    dialogVisible.value = false
+    fetchData()
+  } catch (error) {
+    console.error('保存用户失败:', error)
+    ElMessage.error('保存用户失败:' + error)
+  }
+}
+
+// 关闭对话框
+const handleClose = () => {
+  dialogVisible.value = false
+}
 
 // 获取状态标签类型
 const getStatusType = (status) => {
@@ -133,17 +213,15 @@ const handleCurrentChange = (val) => {
   fetchData()
 }
 
-// ... (rest of the script)
-
 </script>
 
 <template>
   <div class="user-management">
     <el-card class="box-card mb-20 search-card">
 
-      <el-form :model="searchForm" label-position="top" class="search-form">
+      <el-form :model="searchForm" label-width="80px" class="search-form">
         <el-row :gutter="20">
-          <el-col :span="6">
+          <el-col :xs="24" :sm="12" :md="6">
             <el-form-item label="用户名">
               <el-input 
                 v-model="searchForm.username" 
@@ -152,7 +230,7 @@ const handleCurrentChange = (val) => {
               />
             </el-form-item>
           </el-col>
-          <el-col :span="6">
+          <el-col :xs="24" :sm="12" :md="6">
             <el-form-item label="角色">
               <el-select v-model="searchForm.roleName" placeholder="请选择角色" clearable class="w-100">
                 <el-option
@@ -164,7 +242,7 @@ const handleCurrentChange = (val) => {
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="6">
+          <el-col :xs="24" :sm="12" :md="6">
             <el-form-item label="状态">
               <el-select v-model="searchForm.status" placeholder="请选择状态" clearable class="w-100">
                 <el-option
@@ -176,7 +254,7 @@ const handleCurrentChange = (val) => {
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="6">
+          <el-col :xs="24" :sm="12" :md="6">
             <el-form-item label="登录状态">
               <el-select v-model="searchForm.loginStatus" placeholder="请选择登录状态" clearable class="w-100">
                 <el-option
@@ -204,7 +282,7 @@ const handleCurrentChange = (val) => {
             </el-col>
           </template>
         </el-row>
-        
+
         <el-row :gutter="20" class="action-row">
           <el-col :span="24">
             <div class="action-container">
@@ -271,7 +349,7 @@ const handleCurrentChange = (val) => {
             {{ formatTime(row.updateTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="140" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="handleEdit(row)">
               编辑

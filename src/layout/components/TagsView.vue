@@ -122,7 +122,7 @@ const navigateToTag = (path) => {
   white-space: nowrap;
 }
 
-:deep(.dark) .tags-view {
+.dark .tags-view {
   background-color: #262626;
   border-bottom-color: #303030;
 }
@@ -147,7 +147,7 @@ const navigateToTag = (path) => {
   user-select: none;
 }
 
-:deep(.dark) .tag-item {
+.dark .tag-item {
   background-color: #363636;
   color: #a6a6a6;
 }
@@ -156,7 +156,7 @@ const navigateToTag = (path) => {
   background-color: #e9ecef;
 }
 
-:deep(.dark) .tag-item:hover {
+.dark .tag-item:hover {
   background-color: #464646;
 }
 
@@ -190,7 +190,7 @@ const navigateToTag = (path) => {
   min-width: 150px;
 }
 
-:deep(.dark) .context-menu {
+.dark .context-menu {
   background-color: #262626;
   border-color: #303030;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
@@ -207,7 +207,7 @@ const navigateToTag = (path) => {
   transition: all 0.3s;
 }
 
-:deep(.dark) .menu-item {
+.dark .menu-item {
   color: #a6a6a6;
 }
 
@@ -216,7 +216,7 @@ const navigateToTag = (path) => {
   color: #667eea;
 }
 
-:deep(.dark) .menu-item:hover {
+.dark .menu-item:hover {
   background-color: #363636;
   color: #667eea;
 }
@@ -232,7 +232,7 @@ const navigateToTag = (path) => {
   margin: 4px 0;
 }
 
-:deep(.dark) .divider {
+.dark .divider {
   background-color: #3a3a3a;
 }
 </style>

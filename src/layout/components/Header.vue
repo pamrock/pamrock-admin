@@ -119,7 +119,7 @@ const handleUserInfo = () => {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
-:deep(.dark) .header {
+.dark .header {
   background-color: #262626;
   border-bottom-color: #303030;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
@@ -140,7 +140,7 @@ const handleUserInfo = () => {
   transition: color 0.3s;
 }
 
-:deep(.dark) .hamburger {
+.dark .hamburger {
   color: #a6a6a6;
 }
 
@@ -161,7 +161,7 @@ const handleUserInfo = () => {
   transition: color 0.3s;
 }
 
-:deep(.dark) .header-icon {
+.dark .header-icon {
   color: #a6a6a6;
 }
 
@@ -187,7 +187,7 @@ const handleUserInfo = () => {
   white-space: nowrap;
 }
 
-:deep(.dark) .username {
+.dark .username {
   color: #a6a6a6;
 }
 

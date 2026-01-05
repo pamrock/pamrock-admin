@@ -57,7 +57,7 @@ const getMenuKey = (menu) => {
         >
           <template #title>
             <el-icon v-if="menu.icon">
-              <component :is="menu.icon === 'dashboard' ? 'Monitor' : menu.icon === 'setting' ? 'Setting' : menu.icon === 'example' ? 'Operation' : menu.icon === 'log' ? 'List' : 'Menu'" />
+              <component :is="menu.icon === 'dashboard' ? 'Monitor' : menu.icon === 'setting' ? 'Setting' : menu.icon === 'example' ? 'Operation' : 'Menu'" />
             </el-icon>
             <span>{{ menu.name }}</span>
           </template>
@@ -69,7 +69,7 @@ const getMenuKey = (menu) => {
           >
             <template #title>
               <el-icon v-if="child.icon">
-                <component :is="child.icon === 'user' ? 'User' : child.icon === 'role' ? 'Avatar' : child.icon === 'permission' ? 'Key' : child.icon === 'table' ? 'Grid' : child.icon === 'form' ? 'DocumentCopy' : child.icon === 'login-log' ? 'Document' : 'Menu'" />
+                <component :is="child.icon === 'user' ? 'User' : child.icon === 'role' ? 'Avatar' : child.icon === 'permission' ? 'Key' : child.icon === 'table' ? 'Grid' : child.icon === 'form' ? 'DocumentCopy' : 'Menu'" />
               </el-icon>
               <span>{{ child.name }}</span>
             </template>
@@ -103,7 +103,7 @@ const getMenuKey = (menu) => {
   border-right: 1px solid #dcdfe6;
 }
 
-:deep(.dark) .sidebar {
+.dark .sidebar {
   background-color: #1a1a1a;
   border-right-color: #303030;
 }
@@ -119,7 +119,7 @@ const getMenuKey = (menu) => {
   gap: 10px;
 }
 
-:deep(.dark) .logo {
+.dark .logo {
   border-bottom-color: #303030;
 }
 
@@ -144,7 +144,7 @@ const getMenuKey = (menu) => {
   white-space: nowrap;
 }
 
-:deep(.dark) .logo-text {
+.dark .logo-text {
   color: #e0e0e0;
 }
 
@@ -153,7 +153,7 @@ const getMenuKey = (menu) => {
   background-color: #f0f2f5;
 }
 
-:deep(.dark) .el-menu-vertical {
+.dark .el-menu-vertical {
   background-color: #1a1a1a;
 }
 

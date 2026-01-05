@@ -1,6 +1,6 @@
-import { createRouter, createWebHistory } from 'vue-router'
-
 // 导入视图组件
+import { createRouter, createWebHashHistory } from 'vue-router'
+
 import Layout from '@/layout/index.vue'
 import Dashboard from '@/views/dashboard/index.vue'
 import Login from '@/views/login/index.vue'
@@ -79,7 +79,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes
 })
 

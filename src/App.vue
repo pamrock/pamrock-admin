@@ -1,8 +1,19 @@
 <script setup>
 import { useAppStore } from '@/store/modules/app'
-import { onMounted } from 'vue'
+import { onMounted, computed, watch } from 'vue'
 
 const appStore = useAppStore()
+const isDark = computed(() => appStore.isDark)
+
+// 监听暗黑模式变化，并应用到 <html> 标签
+watch(isDark, (newVal) => {
+  const html = document.documentElement
+  if (newVal) {
+    html.classList.add('dark')
+  } else {
+    html.classList.remove('dark')
+  }
+}, { immediate: true })
 
 // 初始化主题
 onMounted(() => {
@@ -11,7 +22,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div id="app">
+  <div id="app" :class="{ dark: isDark }">
     <router-view />
   </div>
 </template>

@@ -12,6 +12,11 @@ const { width } = useWindowSize()
 
 const isMobile = computed(() => width.value < 768)
 
+// 切换侧边栏
+const handleToggleSidebar = () => {
+  appStore.toggleSidebar()
+}
+
 // 小屏幕自动收起侧边栏
 if (isMobile.value && appStore.sidebar.opened) {
   appStore.sidebar.opened = false
@@ -19,7 +24,14 @@ if (isMobile.value && appStore.sidebar.opened) {
 </script>
 
 <template>
-  <div class="layout-container" :class="{ collapse: !appStore.sidebar.opened }">
+  <div class="layout-container" :class="{ collapse: !appStore.sidebar.opened, mobile: isMobile }">
+    <!-- 遮罩层，仅移动端显示 -->
+    <div
+      v-if="isMobile && appStore.sidebar.opened"
+      class="layout-mask"
+      @click="handleToggleSidebar"
+    />
+
     <!-- 侧边栏 -->
     <div class="layout-sidebar">
       <Sidebar />
@@ -63,6 +75,11 @@ if (isMobile.value && appStore.sidebar.opened) {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: margin-left 0.3s;
+}
+
+.layout-mask {
+  display: none;
 }
 
 /* 收起状态 */
@@ -76,17 +93,36 @@ if (isMobile.value && appStore.sidebar.opened) {
     position: fixed;
     left: 0;
     top: 0;
-    z-index: 999;
+    z-index: 1001;
     height: 100vh;
     box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s;
+    transform: translateX(0);
   }
 
   .layout-container.collapse .layout-sidebar {
-    width: 0;
+    width: 200px; /* 移动端展开时宽度固定 */
+    transform: translateX(-100%);
   }
 
   .layout-main {
     width: 100%;
+    margin-left: 0;
+  }
+
+  .layout-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    display: block;
+  }
+
+  .layout-container.collapse .layout-mask {
+    display: none;
   }
 }
 </style>
