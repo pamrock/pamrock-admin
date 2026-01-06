@@ -20,6 +20,10 @@ export function forceLogout(data) {
     return request.post('/user/forceLogout', data)
 }
 
+export function updatePassword(data) {
+    return request.post('/user/updateUserPassword', data)
+}
+
 export function isUserInActive() {
     return request.get('/user/isUserInActive')
 }

@@ -140,16 +140,100 @@ const handleDelete = (row) => {
     type: 'warning'
   }).then(async () => {
     try {
-      Object.assign(userForm, {
-    userId: row.id
-  })
-      const res = await deleteUser(userForm)
-      ElMessage.success(res.data)
-      fetchData()
+      const res = await deleteUser({ userId: row.id })
+      if (res.success) {
+        ElMessage.success(res.data || '删除成功')
+        fetchData()
+      } else {
+        ElMessage.error(res.msg || '删除失败')
+      }
     } catch (error) {
       console.error('删除用户失败:', error)
     }
-  }).catch(() => {})
+  }).catch(() => {
+    // 取消删除，无需操作
+  })
+}
+
+/**
+ * 强制退出（单条）
+ */
+const handleForceLogout = async (row) => {
+  if (!row || !row.id) return
+
+  try {
+    await ElMessageBox.confirm(
+      `确认强制退出用户 "${row.username}" 吗？该用户将需要重新登录。`,
+      '警告',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    loading.value = true
+    const res = await forceLogout({ userIds: [row.id], usernames: [row.username] })
+    
+    if (res.success) {
+      ElMessage.success(res.data || '强制退出成功')
+      fetchData()
+    } else {
+      ElMessage.error(res.msg || '操作失败')
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('强制退出异常:', error)
+      ElMessage.error('系统繁忙，请稍后重试')
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+/**
+ * 批量强制退出
+ */
+const handleBatchForceLogout = async () => {
+  const selection = multipleSelection.value
+  if (!selection || selection.length === 0) {
+    ElMessage.warning('请至少选择一项进行操作')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确认批量强制退出选中的 ${selection.length} 名用户吗？`,
+      '警告',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    loading.value = true
+    
+    const userIds = selection.map(item => item.id)
+    const usernames = selection.map(item => item.username)
+    
+    const res = await forceLogout({ userIds: userIds, usernames: usernames })
+    
+    if (res.success) {
+      ElMessage.success(res.data || '批量操作成功')
+      multipleSelection.value = []
+      fetchData()
+    } else {
+      ElMessage.error(res.msg || '批量操作失败')
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('批量强制退出异常:', error)
+      ElMessage.error('批量操作请求失败')
+    }
+  } finally {
+    loading.value = false
+  }
 }
 
 // 保存
