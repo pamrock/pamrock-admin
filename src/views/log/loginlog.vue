@@ -47,9 +47,12 @@ const fetchData = async () => {
     if (res.success) {
       tableData.value = res.data.records || []
       pagination.total = res.data.total || 0
+    }else{
+      ElMessage.error(res.msg)
     }
   } catch (error) {
     console.error('获取登录日志失败:', error)
+    ElMessage.error('获取登录日志失败')
   } finally {
     loading.value = false
   }
