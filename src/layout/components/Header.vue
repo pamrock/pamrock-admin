@@ -100,7 +100,7 @@ const submitPasswordChange = async () => {
 }
 
 const handleUserInfo = () => {
-  ElMessage.info('个人信息功能开发中...')
+  router.push('/profile')
 }
 </script>
 
@@ -130,7 +130,7 @@ const handleUserInfo = () => {
         <div class="user-info">
           <el-avatar 
             size="32" 
-            src="https://cube.elemecdn.com/0/88/03b0f1ac001e48612fc7f392099a41jpeg.jpeg"
+            :src="userStore.userInfo.avatar"
           />
           <span class="username">{{ userStore.userInfo.username || 'Admin' }}</span>
         </div>

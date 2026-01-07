@@ -24,6 +24,19 @@ export function updatePassword(data) {
     return request.post('/user/updateUserPassword', data)
 }
 
+export function getUserInfo() {
+    return request.post('/user/info')
+}
+
 export function isUserInActive() {
     return request.get('/user/isUserInActive')
+}
+
+export function updateUserBySelf(data, file) {
+    const formData = new FormData()
+    formData.append('request', new Blob([JSON.stringify(data)], { type: 'application/json' }))
+    if (file) {
+        formData.append('file', file)
+    }
+    return request.post('/user/updateUserBySelf', formData)
 }

@@ -50,11 +50,6 @@ const handleLogin = async () => {
     const token = data.token
     
     userStore.login(token)
-    userStore.setUserInfo({
-      username: data.username,
-      email: data.email,
-      avatar: data.avatar
-    })
     ElMessage.success('登录成功')
     router.push('/dashboard')
     loading.value = false

@@ -23,7 +23,20 @@ router.beforeEach(async (to, from, next) => {
       if (to.path === '/login' || to.path === '/register') {
         next('/dashboard')
       } else {
-        next()
+        // 判断当前用户是否已拉取完user_info信息
+        if (!userStore.userInfo.username) {
+          try {
+            await userStore.getUserInfo()
+            next()
+          } catch (error) {
+            // 获取用户信息失败，清除token
+            userStore.logout()
+            ElMessage.error(error.message || '获取用户信息失败')
+            next(`/login?redirect=${to.path}`)
+          }
+        } else {
+          next()
+        }
       }
     }
   } else {

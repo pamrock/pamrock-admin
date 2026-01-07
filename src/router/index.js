@@ -67,6 +67,12 @@ const routes = [
         name: 'LoginLog',
         component: () => import('@/views/log/loginlog.vue'),
         meta: { title: '登录日志', icon: 'Document' }
+      },
+      {
+        path: 'profile',
+        name: 'Profile',
+        component: () => import('@/views/profile/index.vue'),
+        meta: { title: '个人中心', hidden: true }
       }
     ]
   },
