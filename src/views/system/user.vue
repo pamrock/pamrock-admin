@@ -77,7 +77,7 @@ const fetchData = async () => {
       tableData.value = res.data.records || []
       pagination.total = res.data.total || 0
     }else{
-      ElMessage.error(res.message)
+      ElMessage.error(res.msg)
     }
   } catch (error) {
     console.error('获取用户列表失败:', error)

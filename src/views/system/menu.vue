@@ -52,7 +52,15 @@ const iconList = ['Setting', 'User', 'UserFilled', 'Menu', 'Monitor', 'Link', 'P
 function getList() {
   loading.value = true
   getMenuList(queryParams).then(response => {
-    menuList.value = response.data
+    if (response.success) {
+      menuList.value = response.data
+    }else{
+      ElMessage.error(response.msg)
+    }
+    loading.value = false
+  }).catch(error => {
+    console.error('获取菜单列表失败:', error)
+    ElMessage.error('获取菜单列表失败')
     loading.value = false
   })
 }
@@ -73,9 +81,16 @@ function normalizer(node) {
 function getTreeselect() {
   menuOptions.value = []
   getMenuList(queryParams).then(response => {
+    if (response.success) {
     const menu = { id: 0, menuName: '主类目', children: [] }
     menu.children = response.data
     menuOptions.value.push(menu)
+    }else{
+      ElMessage.error(response.msg)
+    }
+  }).catch(error => {
+    console.error('获取菜单列表失败:', error)
+    ElMessage.error('获取菜单列表失败')
   })
 }
 

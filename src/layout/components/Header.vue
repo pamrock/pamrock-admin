@@ -53,8 +53,8 @@ const handleLogout = () => {
     type: 'warning'
   }).then(() => {
     logout()
-    userStore.logout()
     router.push('/login')
+    userStore.logout()
     ElMessage.success('已退出登录')
   }).catch(() => {})
 }
