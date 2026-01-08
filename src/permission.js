@@ -1,5 +1,6 @@
 import router from './router'
 import { useUserStore } from '@/store/modules/user'
+import { usePermissionStore } from '@/store/modules/permission'
 import { useTagsViewStore } from '@/store/modules/tagsView'
 import { hasToken, isTokenExpired } from '@/utils/auth'
 import { ElMessage } from 'element-plus'
@@ -7,6 +8,7 @@ import { ElMessage } from 'element-plus'
 // 路由前置守卫
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
+  const permissionStore = usePermissionStore()
   const hasTokenFlag = hasToken()
 
   // 已登录的情况
@@ -26,8 +28,24 @@ router.beforeEach(async (to, from, next) => {
         // 判断当前用户是否已拉取完user_info信息
         if (!userStore.userInfo.username) {
           try {
-            await userStore.getUserInfo()
-            next()
+            const userInfo = await userStore.getUserInfo()
+            if (!userInfo) {
+              throw new Error('验证失败，请重新登录')
+            }
+            const { roleName } = userInfo
+            // 生成动态路由
+            // 注意：这里假设 roleName 是单个角色，如果是数组请自行调整
+            const roles = roleName ? [roleName] : ['user']
+            const accessRoutes = await permissionStore.generateRoutes(roles)
+
+            // 动态添加路由
+            accessRoutes.forEach(route => {
+              router.addRoute(route)
+            })
+
+            // hack方法 确保addRoutes已完成
+            // set the replace: true so the navigation will not leave a history record
+            next({ ...to, replace: true })
           } catch (error) {
             // 获取用户信息失败，清除token
             userStore.logout()
@@ -42,7 +60,6 @@ router.beforeEach(async (to, from, next) => {
   } else {
     // 未登录的情况
     // 如果访问的是不需要认证的页面，直接进入
-    console.log(to.meta);
     if (to.meta.requiresAuth === false) {
       next()
     } else {

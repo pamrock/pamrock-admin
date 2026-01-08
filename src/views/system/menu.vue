@@ -45,8 +45,20 @@ const rules = {
   path: [{ required: true, message: '路由地址不能为空', trigger: 'blur' }]
 }
 
-// 模拟图标列表
-const iconList = ['Setting', 'User', 'UserFilled', 'Menu', 'Monitor', 'Link', 'Position']
+// 图标列表
+const iconList = [
+  'Setting', 'User', 'UserFilled', 'Menu', 'Monitor', 'Link', 'Position',
+  'HomeFilled', 'List', 'Stamp', 'Edit', 'Share', 'Delete', 'CirclePlus',
+  'Search', 'Bell', 'ChatDotRound', 'Lock', 'Unlock', 'Folder', 'Document',
+  'PieChart', 'View', 'Hide', 'Calendar', 'Ticket', 'CreditCard', 'Service',
+  'Phone', 'Location', 'Star', 'Timer', 'CircleCheck', 'CircleClose',
+  'Warning', 'QuestionFilled', 'InfoFilled', 'SuccessFilled', 'Box', 'Shop',
+  'ShoppingCart', 'Files', 'Notebook', 'Memo', 'Collection', 'PriceTag',
+  'DataAnalysis', 'DataLine', 'DataBoard', 'MagicStick', 'Promotion',
+  'Connection', 'Operation', 'Tools', 'Brush', 'EditPen', 'Paperclip',
+  'Printer', 'Reading', 'TakeawayBox', 'Film', 'Camera', 'VideoCamera',
+  'Picture', 'Mug', 'Trophy', 'Sunny', 'Cloudy', 'Moon', 'Sunrise', 'Sunset'
+]
 
 /** 查询菜单列表 */
 function getList() {
@@ -300,16 +312,22 @@ onMounted(() => {
           </el-radio-group>
         </el-form-item>
         <el-form-item v-if="form.menuType != 'F'" label="菜单图标" prop="icon">
-          <!-- 简单选择，实际可以使用图标选择器组件 -->
-          <el-select v-model="form.icon" placeholder="点击选择图标" style="width: 100%">
+          <el-select v-model="form.icon" placeholder="点击选择图标" style="width: 100%" clearable>
+            <template #prefix v-if="form.icon">
+              <el-icon><component :is="form.icon" /></el-icon>
+            </template>
             <el-option
                 v-for="item in iconList"
                 :key="item"
                 :label="item"
                 :value="item"
             >
-                <span style="float: left">{{ item }}</span>
-                <component :is="item" style="float: right; width: 16px; height: 16px; color: #8492a6;" />
+              <div style="display: flex; align-items: center; justify-content: space-between; height: 100%;">
+                <span>{{ item }}</span>
+                <el-icon style="font-size: 18px; color: #8492a6;">
+                  <component :is="item" />
+                </el-icon>
+              </div>
             </el-option>
           </el-select>
         </el-form-item>
