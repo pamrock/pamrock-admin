@@ -17,6 +17,7 @@ const searchForm = reactive({
   createTime: []
 })
 
+const userFormRef = ref(null)
 const dialogVisible = ref(false)
 const dialogTitle = ref('新增用户')
 const userForm = reactive({
@@ -24,8 +25,20 @@ const userForm = reactive({
   username: '',
   email: '',
   password: '',
-  role: '',
+  roleName: '',
   status: '0'
+})
+
+const userRules = computed(() => {
+  const rules = {
+    username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+    roleName: [{ required: true, message: '请选择角色', trigger: 'change' }],
+    status: [{ required: true, message: '请选择状态', trigger: 'change' }]
+  }
+  if (!userForm.id) {
+    rules.password = [{ required: true, message: '请输入密码', trigger: 'blur' }]
+  }
+  return rules
 })
 
 const roleOptions = [
@@ -129,6 +142,7 @@ const handleAdd = () => {
 const handleEdit = (row) => {
   dialogTitle.value = '编辑用户'
   Object.assign(userForm, row)
+  userForm.password = ''
   dialogVisible.value = true
 }
 
@@ -238,37 +252,38 @@ const handleBatchForceLogout = async () => {
 
 // 保存
 const handleSave = async () => {
-  if (!userForm.username) {
-    ElMessage.error('请输入用户名')
-    return
-  }
+  if (!userFormRef.value) return
+  
+  await userFormRef.value.validate(async (valid) => {
+    if (valid) {
+      // 过滤掉空值参数
+      const data = { ...userForm }
+      Object.keys(data).forEach(key => {
+        if (data[key] === '' || data[key] === null || data[key] === undefined) {
+          delete data[key]
+        }
+      })
 
-  // 过滤掉空值参数
-  const data = { ...userForm }
-  Object.keys(data).forEach(key => {
-    if (data[key] === '' || data[key] === null || data[key] === undefined) {
-      delete data[key]
+      try {
+        if (userForm.id) {
+          const res = await updateUser(data)
+          if (res.success) {
+            ElMessage.success(res.data)
+          } else {
+            ElMessage.error(res.msg)
+          }
+        } else {
+          const res = await addUser(data)
+          ElMessage.success(res.data)
+        }
+        dialogVisible.value = false
+        fetchData()
+      } catch (error) {
+        console.error('保存用户失败:', error)
+        ElMessage.error('保存用户失败:' + error)
+      }
     }
   })
-
-  try {
-    if (userForm.id) {
-      const res = await updateUser(data)
-      if (res.success) {
-        ElMessage.success(res.data)
-      } else {
-        ElMessage.error(res.msg)
-      }
-    } else {
-      const res = await addUser(data)
-      ElMessage.success(res.data)
-    }
-    dialogVisible.value = false
-    fetchData()
-  } catch (error) {
-    console.error('保存用户失败:', error)
-    ElMessage.error('保存用户失败:' + error)
-  }
 }
 
 // 关闭对话框
@@ -464,18 +479,18 @@ const handleCurrentChange = (val) => {
 
     <!-- 新增 / 编辑 对话框 -->
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px">
-      <el-form label-width="100px">
-        <el-form-item label="用户名">
+      <el-form ref="userFormRef" :model="userForm" :rules="userRules" label-width="100px">
+        <el-form-item label="用户名" prop="username">
           <el-input v-model="userForm.username" placeholder="请输入用户名" />
         </el-form-item>
         <el-form-item label="邮箱">
           <el-input v-model="userForm.email" type="email" placeholder="请输入邮箱" />
         </el-form-item>
-        <el-form-item label="密码">
+        <el-form-item label="密码" prop="password">
           <el-input v-model="userForm.password" placeholder="请输入密码" />
         </el-form-item>
-        <el-form-item label="角色">
-          <el-select v-model="userForm.roleName" placeholder="请选择角色">
+        <el-form-item label="角色" prop="roleName">
+          <el-select v-model="userForm.roleName" placeholder="请选择角色" class="w-100">
             <el-option
               v-for="item in roleOptions"
               :key="item.value"
@@ -484,8 +499,8 @@ const handleCurrentChange = (val) => {
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="userForm.status" placeholder="请选择状态">
+        <el-form-item label="状态" prop="status">
+          <el-select v-model="userForm.status" placeholder="请选择状态" class="w-100">
             <el-option
               v-for="item in statusOptions"
               :key="item.value"

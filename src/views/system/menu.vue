@@ -313,7 +313,7 @@ onMounted(() => {
         </el-form-item>
         <el-form-item v-if="form.menuType != 'F'" label="菜单图标" prop="icon">
           <el-select v-model="form.icon" placeholder="点击选择图标" style="width: 100%" clearable>
-            <template #prefix v-if="form.icon">
+            <template #prefix v-if="form.icon && form.icon !== '#'">
               <el-icon><component :is="form.icon" /></el-icon>
             </template>
             <el-option
