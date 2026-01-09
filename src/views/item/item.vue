@@ -59,9 +59,8 @@ function getList() {
   })
 }
 
-// Fetch Categories for Select
 function getCategories() {
-  getCategoryList().then(res => {
+  getCategoryList({}).then(res => {
     if (res.success) {
       categoryOptions.value = res.data
     }
@@ -210,7 +209,7 @@ onMounted(() => {
         <el-table-column label="分类编码" prop="categoryCode" width="120" />
         <el-table-column label="价格" prop="price" width="120">
           <template #default="scope">
-            <span style="color: #f56c6c; font-weight: bold;">¥{{ scope.row.price }}</span>
+            <span style="font-weight: bold;">¥{{ scope.row.price }}</span>
           </template>
         </el-table-column>
         <el-table-column label="收费方式" prop="chargingMethod" width="120" align="center">

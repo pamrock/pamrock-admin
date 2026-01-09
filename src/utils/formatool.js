@@ -15,3 +15,18 @@ export function formatTime(timeStr) {
     const ss = String(date.getSeconds()).padStart(2, '0')
     return `${y}-${m}-${d} ${hh}:${mm}:${ss}`
 }
+
+/**
+ * 过滤对象中为空的属性
+ * @param {Object} obj 
+ * @returns {Object}
+ */
+export function filterObj(obj) {
+    const newObj = {}
+    Object.keys(obj).forEach(key => {
+        if (obj[key] !== null && obj[key] !== undefined && obj[key] !== '') {
+            newObj[key] = obj[key]
+        }
+    })
+    return newObj
+}

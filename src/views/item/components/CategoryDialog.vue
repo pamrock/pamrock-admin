@@ -3,6 +3,7 @@ import { ref, reactive, nextTick, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getCategoryList, addCategory, updateCategory, deleteCategory } from '@/api/category'
 import { Plus, Edit, Delete, Search, Refresh } from '@element-plus/icons-vue'
+import { filterObj } from '@/utils/formatool'
 
 const props = defineProps({
   modelValue: {
@@ -51,7 +52,8 @@ const queryParams = reactive({
 // Get Data
 function getList() {
   loading.value = true
-  getCategoryList(queryParams).then(res => {
+  const params = filterObj(queryParams)
+  getCategoryList(params).then(res => {
     if (res.success) {
       categoryList.value = res.data
     } else {
@@ -133,7 +135,7 @@ function handleDelete(row) {
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    return deleteCategory({ id: row.id })
+    return deleteCategory({ categoryCode: row.categoryCode })
   }).then(() => {
     getList()
     ElMessage.success('删除成功')
