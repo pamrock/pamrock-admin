@@ -5,6 +5,11 @@ export function getMenuList(query) {
   return request.post('/permission/menuList', query)
 }
 
+// 获取当前用户菜单列表
+export function getCurrentUserMenuList(query) {
+  return request.post('/permission/currentUserMenuList', query)
+}
+
 // 查询菜单详细
 export function getMenu(menuId) {
   return request.post('/permission/menuDetail', menuId)

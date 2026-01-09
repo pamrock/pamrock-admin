@@ -20,13 +20,23 @@ export const usePermissionStore = defineStore('permission', () => {
         // 安全检查
         const data = res.data || []
         const accessedRoutes = filterAsyncRoutes(data, roles)
-        
+
+        accessedRoutes.forEach((route, index) => {
+          if (route.component && route.component !== Layout) {
+            accessedRoutes[index] = {
+              path: '/',
+              component: Layout,
+              children: [route]
+            }
+          }
+        })
+
         // 最后添加 404 路由
         accessedRoutes.push({
-            path: '/:pathMatch(.*)*',
-            name: 'NotFound',
-            component: () => import('@/views/404.vue'),
-            meta: { hidden: true }
+          path: '/:pathMatch(.*)*',
+          name: 'NotFound',
+          component: () => import('@/views/404.vue'),
+          meta: { hidden: true }
         })
 
         routes.value = constantRoutes.concat(accessedRoutes)
