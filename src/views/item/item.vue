@@ -35,7 +35,8 @@ const form = reactive({
   timeUnit: 0, //（1:毫秒, 2:纳秒, 3:秒, 4:小时, 5:日, 6:分钟）
   timeLength: 0,
   introduction: '',
-  imageUrl: ''
+  imageUrl: '',
+  status: 0
 })
 
 const uploadFile = ref(null)
@@ -43,6 +44,20 @@ const uploadFile = ref(null)
 function handleFileChange(file) {
   uploadFile.value = file.raw
   form.imageUrl = URL.createObjectURL(file.raw)
+}
+
+function handleStatusChange(row) {
+  const text = row.status === 0 ? '上架' : '下架'
+  updateItem(row).then(res => {
+    if (res.success) {
+      ElMessage.success(text + '成功')
+    } else {
+      ElMessage.error(res.msg || text + '失败')
+      row.status = row.status === 0 ? 1 : 0
+    }
+  }).catch(() => {
+    row.status = row.status === 0 ? 1 : 0
+  })
 }
 
 const rules = {
@@ -105,6 +120,7 @@ function resetForm() {
   form.costtime = ''
   form.introduction = ''
   form.imageUrl = ''
+  form.status = 0
   uploadFile.value = null
 }
 
@@ -240,6 +256,16 @@ onMounted(() => {
           </template>
         </el-table-column>
         <el-table-column label="时长" prop="costtime" width="100" align="center" />
+        <el-table-column label="上架状态" align="center" width="100">
+          <template #default="scope">
+            <el-switch
+              v-model="scope.row.status"
+              :active-value="0"
+              :inactive-value="1"
+              @change="handleStatusChange(scope.row)"
+            />
+          </template>
+        </el-table-column>
         <el-table-column label="图片" prop="imageUrl" width="100" align="center">
           <template #default="scope">
             <el-image 
