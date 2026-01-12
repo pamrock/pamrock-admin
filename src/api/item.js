@@ -6,13 +6,23 @@ export function getItemList(query) {
 }
 
 // 新增服务项目
-export function addItem(data) {
-  return request.post('/item/add', data)
+export function addItem(data, file) {
+  const formData = new FormData()
+  formData.append('request', new Blob([JSON.stringify(data)], { type: 'application/json' }))
+  if (file) {
+    formData.append('file', file)
+  }
+  return request.post('/item/add', formData)
 }
 
 // 修改服务项目
-export function updateItem(data) {
-  return request.post('/item/update', data)
+export function updateItem(data, file) {
+  const formData = new FormData()
+  formData.append('request', new Blob([JSON.stringify(data)], { type: 'application/json' }))
+  if (file) {
+    formData.append('file', file)
+  }
+  return request.post('/item/update', formData)
 }
 
 // 删除服务项目

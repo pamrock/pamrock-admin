@@ -32,9 +32,18 @@ const form = reactive({
   price: 0,
   chargingMethod: 0, // 0-按次 1-按时间
   costtime: '',
+  timeUnit: 0, //（1:毫秒, 2:纳秒, 3:秒, 4:小时, 5:日, 6:分钟）
+  timeLength: 0,
   introduction: '',
   imageUrl: ''
 })
+
+const uploadFile = ref(null)
+
+function handleFileChange(file) {
+  uploadFile.value = file.raw
+  form.imageUrl = URL.createObjectURL(file.raw)
+}
 
 const rules = {
   itemName: [{ required: true, message: '请输入服务名称', trigger: 'blur' }],
@@ -42,6 +51,15 @@ const rules = {
   price: [{ required: true, message: '请输入价格', trigger: 'blur' }],
   chargingMethod: [{ required: true, message: '请选择收费方式', trigger: 'change' }]
 }
+
+const timeUnitOptions = [
+  { value: 1, label: '毫秒' },
+  { value: 2, label: '纳秒' },
+  { value: 3, label: '秒' },
+  { value: 4, label: '小时' },
+  { value: 5, label: '日' },
+  { value: 6, label: '分钟' }
+]
 
 // Fetch Items
 function getList() {
@@ -87,6 +105,7 @@ function resetForm() {
   form.costtime = ''
   form.introduction = ''
   form.imageUrl = ''
+  uploadFile.value = null
 }
 
 function handleAdd() {
@@ -108,7 +127,7 @@ function handleDelete(row) {
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    deleteItem({ id: row.id }).then(res => {
+    deleteItem({ itemId: row.id }).then(res => {
       ElMessage.success('删除成功')
       getList()
     })
@@ -119,13 +138,13 @@ function submitForm() {
   formRef.value.validate(valid => {
     if (valid) {
       if (form.id) {
-        updateItem(form).then(res => {
+        updateItem(form, uploadFile.value).then(res => {
           ElMessage.success('修改成功')
           dialog.visible = false
           getList()
         })
       } else {
-        addItem(form).then(res => {
+        addItem(form, uploadFile.value).then(res => {
           ElMessage.success('新增成功')
           dialog.visible = false
           getList()
@@ -207,6 +226,7 @@ onMounted(() => {
         <el-table-column label="ID" prop="id" width="80" align="center" />
         <el-table-column label="服务名称" prop="itemName" min-width="150" show-overflow-tooltip />
         <el-table-column label="分类编码" prop="categoryCode" width="120" />
+        <el-table-column label="分类名称" prop="categoryName" width="120" />
         <el-table-column label="价格" prop="price" width="120">
           <template #default="scope">
             <span style="font-weight: bold;">¥{{ scope.row.price }}</span>
@@ -287,14 +307,34 @@ onMounted(() => {
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="服务时长" prop="costtime">
-          <el-input v-model="form.costtime" placeholder="例如: PT2H (2小时)" />
+        <el-form-item label="服务时长" prop="timeLength">
+          <el-input v-model="form.timeLength"/>
+        </el-form-item>
+        <el-form-item label="时间单位" prop="timeUnit">
+          <el-select v-model="form.timeUnit" class="w-100">
+            <el-option v-for="item in timeUnitOptions" :key="item.value" :value="item.value" :label="item.label"/>
+          </el-select>
         </el-form-item>
         <el-form-item label="服务介绍" prop="introduction">
           <el-input v-model="form.introduction" type="textarea" :rows="3" placeholder="请输入服务介绍" />
         </el-form-item>
-        <el-form-item label="图片URL" prop="imageUrl">
-          <el-input v-model="form.imageUrl" placeholder="请输入图片URL" />
+        <el-form-item label="服务图片" prop="imageUrl">
+          <el-upload
+            class="avatar-uploader"
+            action="#"
+            :show-file-list="false"
+            :auto-upload="false"
+            :on-change="handleFileChange"
+            accept="image/*"
+          >
+            <div v-if="form.imageUrl" class="avatar-container">
+              <img :src="form.imageUrl" class="avatar" />
+              <div class="avatar-mask">
+                <span>点击更换图片</span>
+              </div>
+            </div>
+            <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+          </el-upload>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -375,5 +415,61 @@ onMounted(() => {
 
 .w-100 {
   width: 100%;
+}
+
+.avatar-uploader .el-upload {
+  border: 1px dashed var(--el-border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: var(--el-transition-duration-fast);
+}
+
+.avatar-uploader .el-upload:hover {
+  border-color: var(--el-color-primary);
+}
+
+.avatar-container {
+  position: relative;
+  width: 178px;
+  height: 178px;
+}
+
+.avatar-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 14px;
+}
+
+.avatar-container:hover .avatar-mask {
+  opacity: 1;
+}
+
+.avatar-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 178px;
+  height: 178px;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.avatar {
+  width: 178px;
+  height: 178px;
+  display: block;
 }
 </style>
