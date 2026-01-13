@@ -5,6 +5,7 @@ import { getItemList, addItem, updateItem, deleteItem } from '@/api/item'
 import { getCategoryList } from '@/api/category'
 import { Search, Plus, Refresh, Delete, Edit, Setting } from '@element-plus/icons-vue'
 import CategoryDialog from './components/CategoryDialog.vue'
+import { filterObj } from '../../utils/formatool'
 
 const loading = ref(false)
 const itemList = ref([])
@@ -16,7 +17,9 @@ const queryParams = reactive({
   pageNo: 1,
   pageSize: 10,
   itemName: '',
-  categoryCode: ''
+  categoryCodes: [],
+  chargingMethod: undefined,
+  status: undefined
 })
 
 const dialog = reactive({
@@ -79,7 +82,8 @@ const timeUnitOptions = [
 // Fetch Items
 function getList() {
   loading.value = true
-  getItemList(queryParams).then(res => {
+  const params = filterObj(queryParams)
+  getItemList(params).then(res => {
     if (res.success) {
       itemList.value = res.data.records
       total.value = res.data.total
@@ -107,14 +111,16 @@ function handleQuery() {
 
 function resetQuery() {
   queryParams.itemName = ''
-  queryParams.categoryCode = ''
+  queryParams.categoryCodes = []
+  queryParams.chargingMethod = undefined
+  queryParams.status = undefined
   handleQuery()
 }
 
 function resetForm() {
   form.id = undefined
   form.itemName = ''
-  form.categoryCode = ''
+  form.categoryCodes = []
   form.price = 0
   form.chargingMethod = 0
   form.costtime = ''
@@ -186,7 +192,7 @@ onMounted(() => {
     <el-card class="box-card mb-20 search-card">
       <el-form :model="queryParams" label-position="top" class="search-form">
         <el-row :gutter="20">
-          <el-col :xs="24" :sm="12" :md="8">
+          <el-col :xs="24" :sm="12" :md="6">
             <el-form-item label="服务名称">
               <el-input
                 v-model="queryParams.itemName"
@@ -196,22 +202,41 @@ onMounted(() => {
               />
             </el-form-item>
           </el-col>
-          <el-col :xs="24" :sm="12" :md="8">
+          <el-col :xs="24" :sm="12" :md="6">
             <el-form-item label="服务分类">
               <el-tree-select
-                v-model="queryParams.categoryCode"
+                v-model="queryParams.categoryCodes"
                 :data="categoryOptions"
                 :props="{ value: 'categoryCode', label: 'categoryName', children: 'children' }"
                 value-key="categoryCode"
                 placeholder="请选择分类"
                 check-strictly
                 clearable
+                multiple
+                show-checkbox
+                collapse-tags
                 class="w-100"
               />
             </el-form-item>
           </el-col>
-          <el-col :xs="24" :sm="24" :md="8">
-            <div class="action-container" style="margin-top: 30px;">
+          <el-col :xs="24" :sm="12" :md="6">
+            <el-form-item label="收费方式">
+              <el-select v-model="queryParams.chargingMethod" placeholder="全部" clearable class="w-100">
+                <el-option label="按次收费" :value="0" />
+                <el-option label="按时收费" :value="1" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12" :md="6">
+            <el-form-item label="状态">
+              <el-select v-model="queryParams.status" placeholder="全部" clearable class="w-100">
+                <el-option label="上架" :value="0" />
+                <el-option label="下架" :value="1" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="24" :md="24">
+            <div class="action-container" style="margin-top: 10px;">
               <el-button type="primary" :icon="Search" @click="handleQuery">搜索</el-button>
               <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
             </div>

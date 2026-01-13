@@ -24,7 +24,7 @@ export function formatTime(timeStr) {
 export function filterObj(obj) {
     const newObj = {}
     Object.keys(obj).forEach(key => {
-        if (obj[key] !== null && obj[key] !== undefined && obj[key] !== '') {
+        if (obj[key] !== null && obj[key] !== undefined && obj[key] !== '' && !(Array.isArray(obj[key]) && obj[key].length === 0)) {
             newObj[key] = obj[key]
         }
     })
