@@ -43,7 +43,7 @@ const initData = () => {
 
 onMounted(async () => {
   // Ensure we have latest info
-  await userStore.getUserInfo()
+  await userStore.getUserInfo(1)
   initData()
 })
 
@@ -86,7 +86,7 @@ const handleSubmit = async () => {
           const res = await updateUserBySelf(payload, uploadFile.value)
           if (res.success) {
             ElMessage.success('个人信息更新成功')
-            await userStore.getUserInfo()
+            await userStore.getUserInfo(1)
             isEditing.value = false
             uploadFile.value = null
           } else {

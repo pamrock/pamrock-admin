@@ -8,6 +8,10 @@ const props = defineProps({
     type: Number,
     required: true
   },
+  userId: {
+    type: Number,
+    required: true
+  },
   visible: {
     type: Boolean,
     required: true
@@ -25,6 +29,7 @@ const addressFormRef = ref(null)
 const addressForm = reactive({
   id: null,
   customerId: null,
+  userId: null,
   contactName: '',
   contactPhone: '',
   areaCode: [],
@@ -107,6 +112,7 @@ const fetchAddresses = async () => {
   try {
     const res = await getCustomerAddressList({
       customerId: props.customerId,
+      userId: props.userId,
       pageNo: 1,
       pageSize: 100
     })

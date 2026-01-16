@@ -24,8 +24,8 @@ export function updatePassword(data) {
     return request.post('/user/updateUserPassword', data)
 }
 
-export function getUserInfo() {
-    return request.post('/user/info')
+export function getUserInfo(role) {
+    return request.post('/user/info', null, { params: { role } })
 }
 
 export function isUserInActive() {

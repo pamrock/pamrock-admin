@@ -28,7 +28,7 @@ router.beforeEach(async (to, from, next) => {
         // 判断当前用户是否已拉取完user_info信息
         if (!userStore.userInfo.username) {
           try {
-            const userInfo = await userStore.getUserInfo()
+            const userInfo = await userStore.getUserInfo(1)
             if (!userInfo) {
               throw new Error('验证失败，请重新登录')
             }

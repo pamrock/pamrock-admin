@@ -18,7 +18,8 @@ const route = useRoute()
 .app-main {
   flex: 1;
   padding: 20px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
 }
