@@ -227,10 +227,10 @@ const handleClose = () => {
 // 获取等级标签类型
 const getLevelType = (level) => {
   const levelMap = {
-    3: 'danger',
-    2: 'warning',
-    1: 'success',
-    0: 'info'
+    3: 'danger',    // VIP 3 - 使用金色
+    2: 'warning',   // VIP 2 - 使用银色
+    1: 'primary',   // VIP 1 - 使用铜色
+    0: 'info'       // 普通 - 使用灰色
   }
   return levelMap[level] || 'info'
 }
@@ -590,5 +590,43 @@ const handleCurrentChange = (val) => {
 
 .ml-10 {
   margin-left: 10px;
+}
+
+:deep(.el-tag--danger) {
+  background: linear-gradient(145deg, #c41e3a, #8b0000);
+  border: 1px solid #a52a2a;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  box-shadow: 
+    inset 0 1px 3px rgba(255,255,255,0.4),
+    0 2px 6px rgba(0,0,0,0.3);
+}
+
+:deep(.el-tag--warning) {
+  background: linear-gradient(145deg, #ffd700, #b8860b);
+  border: 1px solid #daa520;
+  color: #1a0d00;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  box-shadow: inset 0 1px 4px rgba(255,255,255,0.8), 0 3px 8px rgba(0,0,0,0.3);
+}
+
+:deep(.el-tag--primary) {
+  background: linear-gradient(145deg, #4169e1, #2f4f9e);
+  border: 1px solid #3a5bb8;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  box-shadow: 
+    inset 0 1px 3px rgba(255,255,255,0.35),
+    0 2px 6px rgba(0,0,0,0.3);
+}
+
+:deep(.el-tag--info) {
+  background: linear-gradient(145deg, #d0d0d0, #a0a0a0);
+  border: 1px solid #b0b0b0;
+  color: #2c2c2c;
+  text-shadow: 0 1px 1px rgba(255,255,255,0.7);
+  box-shadow: 
+    inset 0 1px 2px rgba(255,255,255,0.6),
+    0 2px 4px rgba(0,0,0,0.15);
 }
 </style>

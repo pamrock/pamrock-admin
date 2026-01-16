@@ -1,6 +1,7 @@
 <script setup>
 import { addCustomerAddress, updateCustomerAddress, getCustomerAddressList } from '@/api/customer'
 import { regionData } from 'element-china-area-data'
+import { Plus } from '@element-plus/icons-vue'
 
 const props = defineProps({
   customerId: {
@@ -26,7 +27,7 @@ const addressForm = reactive({
   customerId: null,
   contactName: '',
   contactPhone: '',
-  areaCode: [], // 使用数组存储级联选择器的值
+  areaCode: [],
   detailAddress: '',
   isDefault: 0
 })
@@ -41,10 +42,57 @@ const addressRules = computed(() => ({
   detailAddress: [{ required: true, message: '请输入详细地址', trigger: 'blur' }]
 }))
 
-const isDefaultOptions = [
-  { label: '是', value: 1 },
-  { label: '否', value: 0 }
-]
+// 辅助函数：根据代码在 regionData 中查找名称
+const findLabelByCode = (data, code) => {
+  if (!data || !code) return ''
+  for (const item of data) {
+    if (item.value === code) {
+      return item.label
+    }
+    if (item.children) {
+      const found = findLabelByCode(item.children, code)
+      if (found) return found
+    }
+  }
+  return ''
+}
+
+// 优化的查找逻辑，利用级联特性
+const getAreaText = (provinceCode, cityCode, districtCode) => {
+  let province = '', city = '', district = ''
+  
+  const pItem = regionData.find(item => item.value === provinceCode)
+  if (pItem) {
+    province = pItem.label
+    if (cityCode && pItem.children) {
+      const cItem = pItem.children.find(item => item.value === cityCode)
+      if (cItem) {
+        city = cItem.label
+        if (districtCode && cItem.children) {
+          const dItem = cItem.children.find(item => item.value === districtCode)
+          if (dItem) {
+            district = dItem.label
+          }
+        }
+      }
+    }
+  }
+  return `${province} ${city} ${district}`.trim()
+}
+
+// 格式化地区显示
+const formatRegion = (province, city, district) => {
+  // 如果没有代码，直接返回空
+  if (!province) return ''
+  // 尝试查找
+  const text = getAreaText(province, city, district)
+  // 如果找不到（比如是旧数据或者是文本），尝试直接返回原值（如果原值不是数字代码）
+  if (!text.trim()) {
+     // 简单的判断，如果看起来不像代码，就直接显示
+     return `${province} ${city} ${district}`
+  }
+  return text
+}
 
 // 监听visible变化
 watch(() => props.visible, (val) => {
@@ -90,13 +138,30 @@ const handleAdd = () => {
 // 编辑地址
 const handleEdit = (row) => {
   dialogTitle.value = '编辑地址'
-  // 将省市区信息转换为级联选择器格式
   const areaCode = [row.province, row.city, row.district]
   Object.assign(addressForm, {
     ...row,
     areaCode: areaCode
   })
   dialogVisible.value = true
+}
+
+// 设置默认地址
+const handleSetDefault = async (row) => {
+  try {
+    const res = await updateCustomerAddress({
+      id: row.id,
+      isDefault: 1
+    })
+    if (res.success) {
+      ElMessage.success('设置成功')
+      fetchAddresses()
+    } else {
+      ElMessage.error(res.msg || '设置失败')
+    }
+  } catch (error) {
+    console.error('设置默认地址失败:', error)
+  }
 }
 
 // 删除地址
@@ -128,7 +193,6 @@ const handleSave = async () => {
   await addressFormRef.value.validate(async (valid) => {
     if (valid) {
       try {
-        // 将级联选择器的值分解为省市区字段
         const [province, city, district] = addressForm.areaCode
         const saveData = {
           ...addressForm,
@@ -136,8 +200,6 @@ const handleSave = async () => {
           city,
           district
         }
-        
-        // 移除不需要的字段
         delete saveData.areaCode
         
         let res
@@ -171,50 +233,55 @@ const handleClose = () => {
   <el-dialog 
     :model-value="visible" 
     title="客户地址管理" 
-    width="80%"
+    width="800px"
     @update:model-value="val => emit('update:visible', val)"
   >
-    <div class="address-management">
+    <div class="address-management" v-loading="loading">
       <div class="address-header">
-        <el-button type="primary" @click="handleAdd">新增地址</el-button>
+        <el-button type="primary" :icon="Plus" @click="handleAdd">新增收货地址</el-button>
       </div>
 
-      <el-table 
-        v-loading="loading"
-        :data="tableData" 
-        stripe 
-        border
-        style="width: 100%; margin-top: 15px;"
-      >
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="contactName" label="联系人" width="100" />
-        <el-table-column prop="contactPhone" label="联系电话" width="120" />
-        <el-table-column prop="province" label="省份" width="100" />
-        <el-table-column prop="city" label="城市" width="100" />
-        <el-table-column prop="district" label="区县" width="100" />
-        <el-table-column prop="detailAddress" label="详细地址" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="isDefault" label="是否默认" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.isDefault === 1 ? 'success' : 'info'">
-              {{ row.isDefault === 1 ? '是' : '否' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
-          <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="handleEdit(row)">
-              编辑
-            </el-button>
-            <el-button link type="danger" size="small" @click="handleDelete(row)">
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <div class="address-list">
+        <el-empty v-if="!tableData.length" description="暂无收货地址" />
+        <div 
+          v-for="item in tableData" 
+          :key="item.id" 
+          class="address-card"
+          :class="{ 'is-default': item.isDefault === 1 }"
+        >
+          <div class="card-body">
+            <div class="user-info">
+              <span class="name">{{ item.contactName }}</span>
+              <span class="phone">{{ item.contactPhone }}</span>
+              <el-tag v-if="item.isDefault === 1" size="small" type="danger" effect="dark" class="default-tag">默认</el-tag>
+            </div>
+            <div class="address-detail">
+              <p class="region">{{ formatRegion(item.province, item.city, item.district) }}</p>
+              <p class="street">{{ item.detailAddress }}</p>
+            </div>
+          </div>
+          <div class="card-actions">
+            <div class="left">
+              <el-link 
+                v-if="item.isDefault !== 1" 
+                type="primary" 
+                :underline="false" 
+                @click="handleSetDefault(item)"
+              >
+                设为默认
+              </el-link>
+            </div>
+            <div class="right">
+              <el-button link type="primary" @click="handleEdit(item)">编辑</el-button>
+              <el-button link type="danger" @click="handleDelete(item)">删除</el-button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 新增 / 编辑 地址对话框 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px" append-to-body>
       <el-form ref="addressFormRef" :model="addressForm" :rules="addressRules" label-width="100px">
         <el-form-item label="联系人" prop="contactName">
           <el-input v-model="addressForm.contactName" placeholder="请输入联系人姓名" />
@@ -240,16 +307,6 @@ const handleClose = () => {
             rows="3"
           />
         </el-form-item>
-        <el-form-item label="是否默认" prop="isDefault">
-          <el-select v-model="addressForm.isDefault" placeholder="请选择" class="w-100">
-            <el-option
-              v-for="item in isDefaultOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -262,14 +319,92 @@ const handleClose = () => {
 <style scoped>
 .address-management {
   min-height: 300px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 10px;
 }
 
 .address-header {
+  margin-bottom: 20px;
   display: flex;
   justify-content: flex-end;
 }
 
-.w-100 {
-  width: 100%;
+.address-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 16px;
+}
+
+.address-card {
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fff;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.address-card:hover {
+  border-color: #409eff;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
+}
+
+.address-card.is-default {
+  border-color: #f56c6c;
+  background: #fffcfc;
+}
+
+.card-body {
+  flex: 1;
+  margin-bottom: 12px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.user-info .name {
+  font-size: 16px;
+  font-weight: bold;
+  color: #303133;
+}
+
+.user-info .phone {
+  color: #606266;
+  font-size: 14px;
+}
+
+.address-detail {
+  font-size: 14px;
+  color: #909399;
+  line-height: 1.6;
+}
+
+.address-detail p {
+  margin: 0;
+}
+
+.card-actions {
+  border-top: 1px solid #f2f6fc;
+  padding-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.default-tag {
+  margin-left: auto;
+}
+
+@media (max-width: 768px) {
+  .address-list {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
