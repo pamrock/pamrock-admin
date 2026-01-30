@@ -116,7 +116,7 @@ function handleDelete(row) {
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    deleteOrder({ id: row.id }).then(res => {
+    deleteOrder({ orderId: row.orderId }).then(res => {
       if (res.success) {
         ElMessage.success('删除成功')
         getList()
