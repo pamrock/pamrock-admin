@@ -69,6 +69,7 @@ const pagination = reactive({
 // 地址对话框
 const addressDialogVisible = ref(false)
 const selectedCustomerId = ref(null)
+const selectedUserId = ref(null)
 
 // 获取数据
 const fetchData = async () => {
@@ -180,6 +181,7 @@ const handleDelete = (row) => {
 // 管理地址
 const handleManageAddress = (row) => {
   selectedCustomerId.value = row.id
+  selectedUserId.value = row.userId
   addressDialogVisible.value = true
 }
 
@@ -227,10 +229,10 @@ const handleClose = () => {
 // 获取等级标签类型
 const getLevelType = (level) => {
   const levelMap = {
-    3: 'danger',    // VIP 3 - 使用金色
-    2: 'warning',   // VIP 2 - 使用银色
-    1: 'primary',   // VIP 1 - 使用铜色
-    0: 'info'       // 普通 - 使用灰色
+    3: 'danger',    
+    2: 'warning',   
+    1: 'primary',   
+    0: 'info'       
   }
   return levelMap[level] || 'info'
 }
@@ -510,6 +512,7 @@ const handleCurrentChange = (val) => {
     <AddressDialog 
       v-if="selectedCustomerId"
       :customer-id="selectedCustomerId"
+      :user-id="selectedUserId"
       :visible="addressDialogVisible"
       @update:visible="addressDialogVisible = $event"
     />

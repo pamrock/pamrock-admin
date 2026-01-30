@@ -18,7 +18,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:visible', 'refresh'])
+const emit = defineEmits(['update:visible', 'refresh', 'select'])
 
 const loading = ref(false)
 const tableData = ref([])
@@ -106,6 +106,12 @@ watch(() => props.visible, (val) => {
   }
 })
 
+onMounted(() => {
+  if (props.visible) {
+    fetchAddresses()
+  }
+})
+
 // 获取地址列表
 const fetchAddresses = async () => {
   loading.value = true
@@ -132,6 +138,7 @@ const handleAdd = () => {
   Object.assign(addressForm, {
     id: null,
     customerId: props.customerId,
+    userId: props.userId,
     contactName: '',
     contactPhone: '',
     areaCode: [],
@@ -162,6 +169,7 @@ const handleSetDefault = async (row) => {
     if (res.success) {
       ElMessage.success('设置成功')
       fetchAddresses()
+      emit('refresh')
     } else {
       ElMessage.error(res.msg || '设置失败')
     }
@@ -183,6 +191,7 @@ const handleDelete = (row) => {
       if (res.success) {
         ElMessage.success(res.data || '删除成功')
         fetchAddresses()
+        emit('refresh')
       } else {
         ElMessage.error(res.msg || '删除失败')
       }
@@ -218,6 +227,7 @@ const handleSave = async () => {
           ElMessage.success(res.data || '保存成功')
           dialogVisible.value = false
           fetchAddresses()
+          emit('refresh')
         } else {
           ElMessage.error(res.msg || '保存失败')
         }
@@ -231,6 +241,12 @@ const handleSave = async () => {
 
 // 关闭对话框
 const handleClose = () => {
+  emit('update:visible', false)
+}
+
+// 选择地址
+const handleSelect = (item) => {
+  emit('select', item)
   emit('update:visible', false)
 }
 </script>
@@ -247,13 +263,14 @@ const handleClose = () => {
         <el-button type="primary" :icon="Plus" @click="handleAdd">新增收货地址</el-button>
       </div>
 
-      <div class="address-list">
-        <el-empty v-if="!tableData.length" description="暂无收货地址" />
+      <el-empty v-if="!tableData.length" description="暂无收货地址" />
+      <div v-else class="address-list">
         <div 
           v-for="item in tableData" 
           :key="item.id" 
           class="address-card"
           :class="{ 'is-default': item.isDefault === 1 }"
+          @click="handleSelect(item)"
         >
           <div class="card-body">
             <div class="user-info">
@@ -272,14 +289,14 @@ const handleClose = () => {
                 v-if="item.isDefault !== 1" 
                 type="primary" 
                 :underline="false" 
-                @click="handleSetDefault(item)"
+                @click.stop="handleSetDefault(item)"
               >
                 设为默认
               </el-link>
             </div>
             <div class="right">
-              <el-button link type="primary" @click="handleEdit(item)">编辑</el-button>
-              <el-button link type="danger" @click="handleDelete(item)">删除</el-button>
+              <el-button link type="primary" @click.stop="handleEdit(item)">编辑</el-button>
+              <el-button link type="danger" @click.stop="handleDelete(item)">删除</el-button>
             </div>
           </div>
         </div>

@@ -25,7 +25,3 @@ export function updateItem(data, file) {
 export function deleteItem(data) {
   return request.post('/item/delete', data)
 }
-
-export function createItemOrder(data) {
-  return request.post('/item/order/add', data)
-}

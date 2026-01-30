@@ -2,12 +2,14 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, ShoppingCart, ArrowRight, Location, Plus, Edit, Position } from '@element-plus/icons-vue'
-import { getItemList, createItemOrder } from '@/api/item'
+import { getItemList} from '@/api/item'
 import { getCategoryList } from '@/api/category'
 import { getUserInfo } from '@/api/user'
 import { getCustomerAddressList } from '@/api/customer'
 import { regionData } from 'element-china-area-data'
 import AddressDialog from './components/AddressDialog.vue'
+import { addOrder } from '../../api/order'
+import { getEmployeeOptions } from '../../api/employee'
 
 const loading = ref(false)
 const categoryLoading = ref(false)
@@ -36,11 +38,45 @@ const currentUser = ref(null)
 const addressList = ref([])
 const selectedAddress = ref(null)
 const addressDialogVisible = ref(false)
+const employeeOptions = ref([])
+const employeeLoading = ref(false)
 
 const orderForm = reactive({
   quantity: 1,
-  remark: ''
+  remark: '',
+  serviceDate: '',
+  visitTimeRange: '',
+  serviceTimeRange: '',
+  employeeId: null
 })
+
+// 上门时间段选项
+const visitTimeRangeOptions = [
+  { label: '08:00-09:00', value: '08:00-09:00' },
+  { label: '09:00-10:00', value: '09:00-10:00' },
+  { label: '10:00-11:00', value: '10:00-11:00' },
+  { label: '11:00-12:00', value: '11:00-12:00' },
+  { label: '12:00-13:00', value: '12:00-13:00' },
+  { label: '13:00-14:00', value: '13:00-14:00' },
+  { label: '14:00-15:00', value: '14:00-15:00' },
+  { label: '15:00-16:00', value: '15:00-16:00' },
+  { label: '16:00-17:00', value: '16:00-17:00' },
+  { label: '17:00-18:00', value: '17:00-18:00' },
+  { label: '18:00-19:00', value: '18:00-19:00' },
+  { label: '19:00-20:00', value: '19:00-20:00' },
+  { label: '20:00-21:00', value: '20:00-21:00' },
+  { label: '21:00-22:00', value: '21:00-22:00' }
+]
+
+// 服务时段选项
+const serviceTimeRangeOptions = [
+  { label: '1小时', value: '1小时' },
+  { label: '2小时', value: '2小时' },
+  { label: '3小时', value: '3小时' },
+  { label: '4小时', value: '4小时' },
+  { label: '半天', value: '半天' },
+  { label: '全天', value: '全天' }
+]
 
 // Level 1 Categories (Roots)
 const parentCategoryOptions = computed(() => {
@@ -175,10 +211,16 @@ const openDetail = item => {
   showOrderConfirm.value = false
   orderForm.quantity = 1
   orderForm.remark = ''
+  orderForm.serviceDate = ''
+  orderForm.visitTimeRange = ''
+  orderForm.serviceTimeRange = ''
+  orderForm.employeeId = null
   // Try to pre-load user info if not present, but don't block UI
   ensureCurrentUser().then(user => {
     if (user) loadAddresses(user.customerId)
   })
+  // Load employees for selection
+  loadEmployees()
 }
 
 const ensureCurrentUser = async () => {
@@ -228,6 +270,22 @@ const handleAddressRefresh = () => {
   }
 }
 
+const loadEmployees = async () => {
+  if (employeeOptions.value.length > 0) return // 已经加载过了
+  
+  employeeLoading.value = true
+  try {
+    const res = await getEmployeeOptions()
+    if (res.success) {
+      employeeOptions.value = res.data || []
+    }
+  } catch (e) {
+    console.error('Failed to load employees', e)
+  } finally {
+    employeeLoading.value = false
+  }
+}
+
 const formatAddress = (addr) => {
   if (!addr) return ''
   // Simple check if it's already text or code
@@ -256,6 +314,11 @@ const handleChangeAddress = () => {
   addressDialogVisible.value = true
 }
 
+const handleAddressSelect = (address) => {
+  selectedAddress.value = address
+  addressDialogVisible.value = false
+}
+
 const handleStartOrder = async () => {
   const user = await ensureCurrentUser()
   if (!user) return
@@ -279,19 +342,32 @@ const handleConfirmOrder = async () => {
     return
   }
 
+  if (!orderForm.serviceDate) {
+    ElMessage.warning('请选择服务日期')
+    return
+  }
+
+  if (!orderForm.visitTimeRange) {
+    ElMessage.warning('请选择上门时间段')
+    return
+  }
+
   submitting.value = true
   try {
-    // Append address info to remark since backend might not support addressId directly
-    const addressStr = `[收货信息] ${selectedAddress.value.contactName} ${selectedAddress.value.contactPhone} ${formatAddress(selectedAddress.value)}`
-    const fullRemark = orderForm.remark ? `${orderForm.remark}\n${addressStr}` : addressStr
+    // 构建服务地址字符串
+    const serviceAddress = formatAddress(selectedAddress.value)
 
     const payload = {
-      itemId: currentItem.value.id,
-      userId: user.id,
-      quantity: orderForm.quantity,
-      remark: fullRemark
+      customerId: user.customerId,
+      employeeId: orderForm.employeeId, // 如果没有员工选择，可以为null
+      serviceItemId: currentItem.value.id,
+      serviceDate: orderForm.serviceDate,
+      serviceAddress: serviceAddress,
+      visitTimeRange: orderForm.visitTimeRange,
+      serviceTimeRange: orderForm.serviceTimeRange
     }
-    const res = await createItemOrder(payload)
+    
+    const res = await addOrder(payload)
     if (res.success) {
       ElMessage.success(res.data || '下单成功')
       detailVisible.value = false
@@ -514,31 +590,94 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- Order Form (Card Style) -->
-          <div v-if="showOrderConfirm" class="content-card">
-             <div class="form-row-between">
-                <span class="label-text">购买数量</span>
-                <el-input-number 
-                  v-model="orderForm.quantity" 
-                  :min="1" 
-                  :max="99"
-                  size="default" 
-                />
-             </div>
-             
-             <div class="form-col mt-4">
-                <span class="label-text mb-2">订单备注</span>
-                <div class="textarea-wrapper">
-                  <el-input
-                    v-model="orderForm.remark"
-                    type="textarea"
-                    :rows="3"
-                    placeholder="选填：请输入您的特殊需求..."
-                    class="remark-input"
-                  />
-                </div>
-             </div>
-          </div>
+           <!-- Order Form (Card Style) -->
+           <div v-if="showOrderConfirm" class="content-card">
+              <div class="form-row-between">
+                 <span class="label-text">购买数量</span>
+                 <el-input-number 
+                   v-model="orderForm.quantity" 
+                   :min="1" 
+                   :max="99"
+                   size="default" 
+                 />
+              </div>
+              
+              <div class="form-col mt-4">
+                 <span class="label-text mb-2">选择阿姨</span>
+                 <el-select
+                   v-model="orderForm.employeeId"
+                   placeholder="您可以指定阿姨哦"
+                   style="width: 100%"
+                   clearable
+                   :loading="employeeLoading"
+                 >
+                   <el-option
+                     v-for="employee in employeeOptions"
+                     :key="employee.id"
+                     :label="employee.name"
+                     :value="employee.id"
+                   />
+                 </el-select>
+              </div>
+              
+              <div class="form-col mt-4">
+                 <span class="label-text mb-2">服务日期</span>
+                 <el-date-picker
+                   v-model="orderForm.serviceDate"
+                   type="date"
+                   placeholder="请选择服务日期"
+                   format="YYYY-MM-DD"
+                   value-format="YYYY-MM-DD"
+                   :disabled-date="(date) => date < new Date().setHours(0,0,0,0)"
+                   style="width: 100%"
+                 />
+              </div>
+              
+              <div class="form-col mt-4">
+                 <span class="label-text mb-2">上门时间段</span>
+                 <el-select
+                   v-model="orderForm.visitTimeRange"
+                   placeholder="请选择上门时间段"
+                   style="width: 100%"
+                 >
+                   <el-option
+                     v-for="option in visitTimeRangeOptions"
+                     :key="option.value"
+                     :label="option.label"
+                     :value="option.value"
+                   />
+                 </el-select>
+              </div>
+              
+              <div class="form-col mt-4">
+                 <span class="label-text mb-2">服务时段</span>
+                 <el-select
+                   v-model="orderForm.serviceTimeRange"
+                   placeholder="请选择服务时段"
+                   style="width: 100%"
+                 >
+                   <el-option
+                     v-for="option in serviceTimeRangeOptions"
+                     :key="option.value"
+                     :label="option.label"
+                     :value="option.value"
+                   />
+                 </el-select>
+              </div>
+              
+              <div class="form-col mt-4">
+                 <span class="label-text mb-2">订单备注</span>
+                 <div class="textarea-wrapper">
+                   <el-input
+                     v-model="orderForm.remark"
+                     type="textarea"
+                     :rows="3"
+                     placeholder="选填：请输入您的特殊需求..."
+                     class="remark-input"
+                   />
+                 </div>
+              </div>
+           </div>
         </div>
 
         <!-- Fixed Footer -->
@@ -586,6 +725,7 @@ onMounted(() => {
       v-model:visible="addressDialogVisible"
       :customer-id="currentUser.customerId"
       @refresh="handleAddressRefresh"
+      @select="handleAddressSelect"
     />
   </div>
 </template>

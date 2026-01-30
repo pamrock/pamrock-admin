@@ -1,0 +1,31 @@
+import request from '@/utils/request'
+
+// 获取订单列表
+export function getOrderList(data) {
+  return request.post('/order/list', data)
+}
+
+// 获取订单详情
+export function getOrderDetail(data) {
+  return request.post('/order/detail', data)
+}
+
+// 新增订单
+export function addOrder(data) {
+  return request.post('/order/add', data)
+}
+
+// 修改订单
+export function updateOrder(data) {
+  return request.post('/order/update', data)
+}
+
+// 修改订单状态
+export function updateOrderStatus(data) {
+  return request.post('/order/updateStatus', data)
+}
+
+// 删除订单
+export function deleteOrder(data) {
+  return request.post('/order/delete', data)
+}
