@@ -1,15 +1,16 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, ShoppingCart, ArrowRight, Location, Plus, Edit, Position } from '@element-plus/icons-vue'
+import { Search, ShoppingCart, ArrowRight, Location, Plus, Edit, Position, Check } from '@element-plus/icons-vue'
 import { getItemList} from '@/api/item'
 import { getCategoryList } from '@/api/category'
 import { getUserInfo } from '@/api/user'
 import { getCustomerAddressList } from '@/api/customer'
 import { regionData } from 'element-china-area-data'
 import AddressDialog from './components/AddressDialog.vue'
+import EmployeeSelector from './components/EmployeeSelector.vue'
 import { addOrder } from '../../api/order'
-import { getEmployeeOptions } from '../../api/employee'
+import { getEmployeeList } from '../../api/employee'
 
 const loading = ref(false)
 const categoryLoading = ref(false)
@@ -38,6 +39,7 @@ const currentUser = ref(null)
 const addressList = ref([])
 const selectedAddress = ref(null)
 const addressDialogVisible = ref(false)
+const employeeSelectorVisible = ref(false)
 const employeeOptions = ref([])
 const employeeLoading = ref(false)
 
@@ -275,9 +277,11 @@ const loadEmployees = async () => {
   
   employeeLoading.value = true
   try {
-    const res = await getEmployeeOptions()
-    if (res.success) {
-      employeeOptions.value = res.data || []
+    const res = await getEmployeeList({ pageNo: 1, pageSize: 1000, status: 'ACTIVE' }) // Get all active employees
+    if (res.code === 200) {
+      // Map the employee list to options format if needed, or just use list directly
+      // Assuming res.data.list is the array of employees based on index.vue implementation
+      employeeOptions.value = res.data.records || []
     }
   } catch (e) {
     console.error('Failed to load employees', e)
@@ -318,6 +322,16 @@ const handleAddressSelect = (address) => {
   selectedAddress.value = address
   addressDialogVisible.value = false
 }
+
+const handleEmployeeSelect = (employee) => {
+  orderForm.employeeId = employee.id
+}
+
+const getSelectedEmployeeName = computed(() => {
+  if (!orderForm.employeeId) return ''
+  const emp = employeeOptions.value.find(e => e.id === orderForm.employeeId)
+  return emp ? emp.realName : ''
+})
 
 const handleStartOrder = async () => {
   const user = await ensureCurrentUser()
@@ -604,20 +618,23 @@ onMounted(() => {
               
               <div class="form-col mt-4">
                  <span class="label-text mb-2">选择阿姨</span>
-                 <el-select
-                   v-model="orderForm.employeeId"
-                   placeholder="您可以指定阿姨哦"
-                   style="width: 100%"
-                   clearable
-                   :loading="employeeLoading"
+                 <div 
+                   class="employee-trigger-card" 
+                   @click="employeeSelectorVisible = true"
+                   :class="{ 'has-value': orderForm.employeeId }"
                  >
-                   <el-option
-                     v-for="employee in employeeOptions"
-                     :key="employee.id"
-                     :label="employee.name"
-                     :value="employee.id"
-                   />
-                 </el-select>
+                   <template v-if="orderForm.employeeId">
+                     <div class="selected-emp-info">
+                       <span class="emp-name">{{ getSelectedEmployeeName }}</span>
+                       <span class="emp-change-text">点击更换</span>
+                     </div>
+                     <el-icon class="check-icon"><Check /></el-icon>
+                   </template>
+                   <template v-else>
+                     <span class="placeholder-text">点击选择为您服务的阿姨（可选）</span>
+                     <el-icon class="arrow-icon"><ArrowRight /></el-icon>
+                   </template>
+                 </div>
               </div>
               
               <div class="form-col mt-4">
@@ -726,6 +743,13 @@ onMounted(() => {
       :customer-id="currentUser.customerId"
       @refresh="handleAddressRefresh"
       @select="handleAddressSelect"
+    />
+
+    <EmployeeSelector
+      v-model:visible="employeeSelectorVisible"
+      :employees="employeeOptions"
+      :selected-id="orderForm.employeeId"
+      @select="handleEmployeeSelect"
     />
   </div>
 </template>
@@ -1482,6 +1506,60 @@ onMounted(() => {
   font-weight: 600;
   letter-spacing: 0.5px;
   box-shadow: 0 4px 10px rgba(76, 111, 255, 0.3);
+}
+
+.employee-trigger-card {
+  border: 1px dashed var(--el-border-color);
+  border-radius: 8px;
+  padding: 12px 16px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--el-fill-color-lighter);
+  transition: all 0.2s;
+  min-height: 48px;
+}
+
+.employee-trigger-card:hover {
+  border-color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+}
+
+.employee-trigger-card.has-value {
+  border-style: solid;
+  border-color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+}
+
+.placeholder-text {
+  font-size: 14px;
+  color: var(--el-text-color-placeholder);
+}
+
+.selected-emp-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.emp-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--el-color-primary);
+}
+
+.emp-change-text {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.arrow-icon {
+  color: var(--el-text-color-secondary);
+}
+
+.check-icon {
+  color: var(--el-color-primary);
+  font-size: 18px;
 }
 
 :global(html.dark) .detail-footer {
