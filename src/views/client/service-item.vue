@@ -11,6 +11,7 @@ import AddressDialog from './components/AddressDialog.vue'
 import EmployeeSelector from './components/EmployeeSelector.vue'
 import { addOrder } from '../../api/order'
 import { getEmployeeList } from '../../api/employee'
+import { alipayPay } from '../../api/pay'
 
 const loading = ref(false)
 const categoryLoading = ref(false)
@@ -378,13 +379,35 @@ const handleConfirmOrder = async () => {
       serviceDate: orderForm.serviceDate,
       serviceAddress: serviceAddress,
       visitTimeRange: orderForm.visitTimeRange,
-      serviceTimeRange: orderForm.serviceTimeRange
+      serviceTimeRange: orderForm.serviceTimeRange,
+      amount: orderForm.quantity,
+      price: currentItem.value.price
     }
     
     const res = await addOrder(payload)
     if (res.success) {
-      ElMessage.success(res.data || '下单成功')
+      ElMessage.success('下单成功，正在跳转支付...')
       detailVisible.value = false
+      
+      // 发起支付
+      try {
+        const orderId = res.data // 假设 data 返回的是订单 ID
+        if (orderId) {
+           const payForm = await alipayPay({ orderId })
+           if (payForm) {
+             const div = document.createElement('div')
+             div.innerHTML = payForm
+             document.body.appendChild(div)
+             const form = div.getElementsByTagName('form')[0]
+             if (form) {
+               form.submit()
+             }
+           }
+        }
+      } catch (payError) {
+        console.error('Payment Error', payError)
+        ElMessage.warning('订单已创建但支付跳转失败，请在订单中心继续支付')
+      }
     } else {
       ElMessage.error(res.msg || '下单失败')
     }
