@@ -6,19 +6,30 @@ export function getItemList(query) {
 
 export function addItem(data, file) {
   const formData = new FormData()
-  formData.append('request', new Blob([JSON.stringify(data)], { type: 'application/json' }))
+  
+  formData.append('request', 
+    new Blob([JSON.stringify(data)], { type: 'application/json' })
+  )
+  
   if (file) {
     formData.append('file', file)
   }
+  
   return request.post('/item/add', formData)
+  // 同样不要加 headers
 }
+
+
 
 export function updateItem(data, file) {
   const formData = new FormData()
-  formData.append('request', new Blob([JSON.stringify(data)], { type: 'application/json' }))
+  formData.append('request', 
+    new Blob([JSON.stringify(data)], { type: 'application/json' })
+  )
   if (file) {
     formData.append('file', file)
   }
+  
   return request.post('/item/update', formData)
 }
 
