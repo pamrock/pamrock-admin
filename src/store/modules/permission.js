@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { getMenuList } from '@/api/menu'
+import { getCurrentUserMenuList } from '@/api/menu'
 import Layout from '@/layout/index.vue'
 
 // 匹配 views 里面所有的 .vue 文件
@@ -16,7 +16,7 @@ export const usePermissionStore = defineStore('permission', () => {
     const { constantRoutes } = await import('@/router')
 
     return new Promise((resolve, reject) => {
-      getMenuList({}).then(res => {
+      getCurrentUserMenuList({}).then(res => {
         // 安全检查
         const data = res.data || []
         const accessedRoutes = filterAsyncRoutes(data, roles)
