@@ -3,7 +3,7 @@ import { getToken, removeToken } from './auth'
 import { ElMessage } from 'element-plus'
 
 const instance = axios.create({
-  baseURL: 'http://127.0.0.1:1231',
+  baseURL: 'https://admint.pamrock.top/api',
   timeout: 100000
 })
 

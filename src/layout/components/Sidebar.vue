@@ -8,8 +8,23 @@ const appStore = useAppStore()
 const permissionStore = usePermissionStore()
 const router = useRouter()
 
+const getVisibleChildren = (children = []) => {
+  return children.filter(item => !item.meta?.hidden)
+}
+
 const showMenu = computed(() => {
-  return permissionStore.routes.filter(route => !route.meta?.hidden)
+  return permissionStore.routes
+    .filter(route => !route.meta?.hidden)
+    .map(route => {
+      if (!route.children) {
+        return route
+      }
+      return {
+        ...route,
+        children: getVisibleChildren(route.children)
+      }
+    })
+    .filter(route => !route.children || route.children.length > 0)
 })
 
 // 路径拼接
@@ -22,11 +37,15 @@ const resolvePath = (basePath, routePath) => {
 
 // 获取唯一显示的子节点（如果有且仅有一个）
 const getOnlyShowingChild = (children = [], parent) => {
-  const showingChildren = children.filter(item => !item.meta?.hidden)
+  const showingChildren = getVisibleChildren(children)
   if (showingChildren.length === 1) {
     return showingChildren[0]
   }
   return null
+}
+
+const getSubMenuIndex = (menu, menuIndex) => {
+  return `${menu.path}_${menu.name || menuIndex}`
 }
 </script>
 
@@ -43,7 +62,7 @@ const getOnlyShowingChild = (children = [], parent) => {
       class="el-menu-vertical"
       router
     >
-      <template v-for="menu in showMenu" :key="menu.path">
+      <template v-for="(menu, menuIndex) in showMenu" :key="menu.path + '_' + (menu.name || menuIndex)">
         <!-- 逻辑：如果只有一个子节点，且不强制显示父节点，则直接显示该子节点（提升层级） -->
         <!-- 例如：Dashboard 结构是 { path: '/', children: [{ path: 'dashboard' }] } -->
         <!-- 这里会直接渲染 dashboard 为一级菜单 -->
@@ -80,7 +99,7 @@ const getOnlyShowingChild = (children = [], parent) => {
             <!-- 有子节点的菜单 (System, Log) -->
             <el-sub-menu 
               v-else
-              :index="menu.path"
+              :index="getSubMenuIndex(menu, menuIndex)"
               :key="menu.path + '_sub'"
             >
               <template #title>
@@ -91,20 +110,17 @@ const getOnlyShowingChild = (children = [], parent) => {
                 <span>{{ menu.meta?.title || menu.name }}</span>
               </template>
               
-              <template v-for="child in menu.children">
-                 <template v-if="!child.meta?.hidden">
-                    <el-menu-item 
-                        :key="child.path"
-                        :index="resolvePath(menu.path, child.path)"
-                    >
-                        <template #title>
-                        <el-icon v-if="child.meta?.icon">
-                            <component :is="child.meta.icon" />
-                        </el-icon>
-                        <span>{{ child.meta?.title || child.name }}</span>
-                        </template>
-                    </el-menu-item>
-                 </template>
+              <template v-for="child in menu.children" :key="child.path">
+                 <el-menu-item 
+                    :index="resolvePath(menu.path, child.path)"
+                 >
+                    <template #title>
+                      <el-icon v-if="child.meta?.icon">
+                        <component :is="child.meta.icon" />
+                      </el-icon>
+                      <span>{{ child.meta?.title || child.name }}</span>
+                    </template>
+                 </el-menu-item>
               </template>
             </el-sub-menu>
         </template>

@@ -68,7 +68,7 @@ export function filterAsyncRoutes(routes, roles) {
       meta: {
         title: route.menuName,
         icon: (route.icon && route.icon !== '#') ? route.icon : '',
-        hidden: route.visible === '1' // 假设 1 是隐藏
+        hidden: String(route.visible) === '1'
       }
     }
 
