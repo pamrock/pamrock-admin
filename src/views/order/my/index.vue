@@ -192,7 +192,7 @@ const viewDetail = async (id) => {
   detailLoading.value = true
   currentDetail.value = null
   try {
-    const res = await getOrderDetail({ id })
+    const res = await getOrderDetail({ orderId: id })
     if (res.success || res.code === 200 || res.code === 0) {
       currentDetail.value = res.data
     } else {
