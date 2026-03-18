@@ -3,9 +3,12 @@
     <!-- 头部导航或 Tabs -->
     <el-tabs v-model="activeTab" class="order-tabs" @tab-change="handleTabChange">
       <el-tab-pane label="全部" name="all" />
-      <el-tab-pane label="待支付" name="unpaid" />
-      <el-tab-pane label="可使用" name="usable" />
-      <el-tab-pane label="退款/售后" name="refund" />
+      <el-tab-pane label="待支付" name="1" />
+      <el-tab-pane label="待派单" name="2" />
+      <el-tab-pane label="已派单" name="3" />
+      <el-tab-pane label="服务中" name="4" />
+      <el-tab-pane label="已完成" name="5" />
+      <el-tab-pane label="已取消" name="6" />
     </el-tabs>
 
     <!-- 订单列表区 -->
@@ -24,7 +27,7 @@
               <el-icon><ArrowRight /></el-icon>
             </div>
             <div class="order-status" :class="{ 'text-danger': isUnpaid(order.status) }">
-              {{ order.status }}
+              {{ getStatusText(order.status) }}
             </div>
           </div>
           
@@ -84,7 +87,7 @@
           <el-descriptions-item label="服务项目">{{ currentDetail.serviceItem }}</el-descriptions-item>
           <el-descriptions-item label="订单金额">¥ {{ currentDetail.totalAmount }}</el-descriptions-item>
           <el-descriptions-item label="订单状态">
-            <el-tag :type="getStatusType(currentDetail.status)">{{ currentDetail.status }}</el-tag>
+            <el-tag :type="getStatusType(currentDetail.status)">{{ getStatusText(currentDetail.status) }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="下单时间">{{ currentDetail.createTime }}</el-descriptions-item>
           <!-- 其他详情字段可以根据实际接口返回补充 -->
@@ -108,8 +111,7 @@ const total = ref(0)
 
 const queryParams = reactive({
   pageNum: 1,
-  pageSize: 10,
-  employeeId: userStore.userInfo.id,
+  pageSize: 10
 })
 
 const dialogVisible = ref(false)
@@ -119,13 +121,11 @@ const currentDetail = ref(null)
 const fetchList = async () => {
   loading.value = true
   try {
-    const reqData = { ...queryParams, employeeId: userStore.userInfo.id || 1 }
+    const reqData = { ...queryParams }
     
     // 假设通过 activeTab 过滤状态，后端需要支持 status 字段
     if (activeTab.value !== 'all') {
-      if (activeTab.value === 'unpaid') reqData.status = '待支付'
-      if (activeTab.value === 'usable') reqData.status = '可使用'
-      if (activeTab.value === 'refund') reqData.status = '退款/售后'
+      reqData.status = activeTab.value
     }
 
     const res = await getMyOrderList(reqData)
@@ -164,13 +164,27 @@ const handleCurrentChange = (val) => {
 const isUnpaid = (status) => {
   if (!status) return false
   const s = status.toString()
-  return s === '待支付' || s === '未支付' || s === 'UNPAID' || s === '待付款'
+  return s === '1'
 }
 
 const getStatusType = (status) => {
-  if (isUnpaid(status)) return 'danger'
-  if (status === '已完成' || status === 'COMPLETED') return 'success'
-  return 'info'
+  const s = status?.toString()
+  if (s === '1') return 'danger'
+  if (s === '5') return 'success'
+  if (s === '6') return 'info'
+  return 'primary'
+}
+
+const getStatusText = (status) => {
+  const map = {
+    '1': '待支付',
+    '2': '待派单',
+    '3': '已派单',
+    '4': '服务中',
+    '5': '已完成',
+    '6': '已取消'
+  }
+  return map[status?.toString()] || status
 }
 
 const viewDetail = async (id) => {
