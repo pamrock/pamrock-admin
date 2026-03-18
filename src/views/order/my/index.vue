@@ -1,0 +1,395 @@
+<template>
+  <div class="my-order-container">
+    <!-- 头部导航或 Tabs -->
+    <el-tabs v-model="activeTab" class="order-tabs" @tab-change="handleTabChange">
+      <el-tab-pane label="全部" name="all" />
+      <el-tab-pane label="待支付" name="unpaid" />
+      <el-tab-pane label="可使用" name="usable" />
+      <el-tab-pane label="退款/售后" name="refund" />
+    </el-tabs>
+
+    <!-- 订单列表区 -->
+    <div class="order-list" v-loading="loading">
+      <template v-if="orderList.length > 0">
+        <div 
+          class="order-card" 
+          v-for="order in orderList" 
+          :key="order.id"
+          @click="viewDetail(order.id)"
+        >
+          <div class="card-header">
+            <div class="shop-info">
+              <el-icon class="shop-icon"><Shop /></el-icon>
+              <span class="shop-name">{{ order.serviceItem }}</span>
+              <el-icon><ArrowRight /></el-icon>
+            </div>
+            <div class="order-status" :class="{ 'text-danger': isUnpaid(order.status) }">
+              {{ order.status }}
+            </div>
+          </div>
+          
+          <div class="card-body">
+            <div class="goods-info">
+              <div class="goods-image">
+                <!-- 占位图 -->
+                <el-icon class="image-placeholder"><Picture /></el-icon>
+              </div>
+              <div class="goods-detail">
+                <div class="goods-name">{{ order.serviceItem }}</div>
+                <div class="goods-time">下单时间：{{ order.createTime }}</div>
+              </div>
+            </div>
+            <div class="order-price-row">
+              <span>总价：</span>
+              <span class="price-symbol">¥</span>
+              <span class="price-value">{{ order.totalAmount }}</span>
+            </div>
+          </div>
+          
+          <div class="card-footer" v-if="isUnpaid(order.status)">
+            <el-button 
+              type="warning" 
+              plain 
+              round 
+              size="small" 
+              @click.stop="goPay(order)"
+            >
+              去支付
+            </el-button>
+          </div>
+        </div>
+        
+        <!-- 分页 -->
+        <div class="pagination-container">
+          <el-pagination
+            v-model:current-page="queryParams.pageNum"
+            v-model:page-size="queryParams.pageSize"
+            :page-sizes="[10, 20, 30, 50]"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="total"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+          />
+        </div>
+      </template>
+      
+      <el-empty v-else description="暂无订单数据" />
+    </div>
+
+    <!-- 订单详情弹窗 -->
+    <el-dialog v-model="dialogVisible" title="订单详情" width="500px">
+      <div class="detail-content" v-loading="detailLoading" v-if="currentDetail">
+        <el-descriptions :column="1" border>
+          <el-descriptions-item label="订单ID">{{ currentDetail.id }}</el-descriptions-item>
+          <el-descriptions-item label="服务项目">{{ currentDetail.serviceItem }}</el-descriptions-item>
+          <el-descriptions-item label="订单金额">¥ {{ currentDetail.totalAmount }}</el-descriptions-item>
+          <el-descriptions-item label="订单状态">
+            <el-tag :type="getStatusType(currentDetail.status)">{{ currentDetail.status }}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="下单时间">{{ currentDetail.createTime }}</el-descriptions-item>
+          <!-- 其他详情字段可以根据实际接口返回补充 -->
+        </el-descriptions>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, onMounted } from 'vue'
+import { getMyOrderList, getOrderDetail } from '@/api/order'
+import { useUserStore } from '@/store/modules/user'
+import { ElMessage } from 'element-plus'
+
+const userStore = useUserStore()
+const activeTab = ref('all')
+const loading = ref(false)
+const orderList = ref([])
+const total = ref(0)
+
+const queryParams = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  employeeId: userStore.userInfo.id,
+})
+
+const dialogVisible = ref(false)
+const detailLoading = ref(false)
+const currentDetail = ref(null)
+
+const fetchList = async () => {
+  loading.value = true
+  try {
+    const reqData = { ...queryParams, employeeId: userStore.userInfo.id || 1 }
+    
+    // 假设通过 activeTab 过滤状态，后端需要支持 status 字段
+    if (activeTab.value !== 'all') {
+      if (activeTab.value === 'unpaid') reqData.status = '待支付'
+      if (activeTab.value === 'usable') reqData.status = '可使用'
+      if (activeTab.value === 'refund') reqData.status = '退款/售后'
+    }
+
+    const res = await getMyOrderList(reqData)
+    // 根据通用响应格式适配
+    if (res.success || res.code === 200 || res.code === 0) {
+      const data = res.data || {}
+      orderList.value = data.records || data.list || (Array.isArray(data) ? data : [])
+      total.value = data.total || orderList.value.length || 0
+    } else {
+      orderList.value = res.data?.records || res.data?.list || (Array.isArray(res.data) ? res.data : [])
+      total.value = res.data?.total || orderList.value.length || 0
+    }
+  } catch (error) {
+    console.error('获取订单列表失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleTabChange = () => {
+  queryParams.pageNum = 1
+  fetchList()
+}
+
+const handleSizeChange = (val) => {
+  queryParams.pageSize = val
+  fetchList()
+}
+
+const handleCurrentChange = (val) => {
+  queryParams.pageNum = val
+  fetchList()
+}
+
+// 判断是否未支付，包含常见状态字符
+const isUnpaid = (status) => {
+  if (!status) return false
+  const s = status.toString()
+  return s === '待支付' || s === '未支付' || s === 'UNPAID' || s === '待付款'
+}
+
+const getStatusType = (status) => {
+  if (isUnpaid(status)) return 'danger'
+  if (status === '已完成' || status === 'COMPLETED') return 'success'
+  return 'info'
+}
+
+const viewDetail = async (id) => {
+  dialogVisible.value = true
+  detailLoading.value = true
+  currentDetail.value = null
+  try {
+    const res = await getOrderDetail({ id })
+    if (res.success || res.code === 200 || res.code === 0) {
+      currentDetail.value = res.data
+    } else {
+      currentDetail.value = res.data || { id, serviceItem: '获取详情失败' }
+    }
+  } catch (error) {
+    console.error('获取详情失败:', error)
+    ElMessage.error('获取订单详情失败')
+  } finally {
+    detailLoading.value = false
+  }
+}
+
+const goPay = (order) => {
+  ElMessage.success(`正在拉起支付... 订单：${order.id}，金额：¥${order.totalAmount}`)
+  // 模拟支付完成重新刷新列表
+  // setTimeout(() => { fetchList() }, 1000)
+}
+
+onMounted(() => {
+  fetchList()
+})
+</script>
+
+<style scoped>
+.my-order-container {
+  padding: 16px;
+  background-color: #f5f5f5;
+  min-height: calc(100vh - 84px);
+}
+
+.dark .my-order-container {
+  background-color: #141414;
+}
+
+.order-tabs {
+  background: #fff;
+  padding: 0 16px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.dark .order-tabs {
+  background: #1d1d1d;
+}
+
+.order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.order-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.dark .order-card {
+  background: #1d1d1d;
+}
+
+.order-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.dark .card-header {
+  border-bottom-color: #303030;
+}
+
+.shop-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: bold;
+  font-size: 15px;
+  color: #333;
+}
+
+.dark .shop-info {
+  color: #e5e5e5;
+}
+
+.shop-icon {
+  font-size: 16px;
+  color: #666;
+}
+
+.order-status {
+  font-size: 14px;
+  color: #666;
+}
+
+.dark .order-status {
+  color: #999;
+}
+
+.text-danger {
+  color: #ff4d4f !important;
+}
+
+.dark .text-danger {
+  color: #ff7875 !important;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.goods-info {
+  display: flex;
+  gap: 12px;
+}
+
+.goods-image {
+  width: 60px;
+  height: 60px;
+  background: #f5f5f5;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dark .goods-image {
+  background: #2b2b2b;
+}
+
+.image-placeholder {
+  font-size: 24px;
+  color: #ccc;
+}
+
+.goods-detail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.goods-name {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.4;
+}
+
+.dark .goods-name {
+  color: #e5e5e5;
+}
+
+.goods-time {
+  font-size: 12px;
+  color: #999;
+}
+
+.order-price-row {
+  text-align: right;
+  font-size: 13px;
+  color: #666;
+}
+
+.dark .order-price-row {
+  color: #999;
+}
+
+.price-symbol {
+  font-size: 12px;
+  color: #333;
+  font-weight: bold;
+}
+
+.price-value {
+  font-size: 18px;
+  color: #333;
+  font-weight: bold;
+}
+
+.dark .price-symbol,
+.dark .price-value {
+  color: #e5e5e5;
+}
+
+.card-footer {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.dark .card-footer {
+  border-top-color: #303030;
+}
+
+.pagination-container {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+</style>

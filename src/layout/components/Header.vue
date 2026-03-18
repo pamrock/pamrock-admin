@@ -102,6 +102,10 @@ const submitPasswordChange = async () => {
 const handleUserInfo = () => {
   router.push('/profile')
 }
+
+const handleMyOrders = () => {
+  router.push('/order/my')
+}
 </script>
 
 <template>
@@ -115,6 +119,11 @@ const handleUserInfo = () => {
     </div>
 
     <div class="header-right">
+      <!-- 我的订单 -->
+      <div class="header-icon" @click="handleMyOrders" title="我的订单">
+        <el-icon><Tickets /></el-icon>
+      </div>
+
       <!-- 暗黑模式切换 -->
       <el-icon class="header-icon" @click="appStore.toggleDark">
         <component :is="appStore.isDark ? 'Sunny' : 'Moon'" />

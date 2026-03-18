@@ -36,6 +36,12 @@ export const constantRoutes = [
         name: 'Profile',
         component: () => import('@/views/profile/index.vue'),
         meta: { title: '个人中心', hidden: true }
+      },
+      {
+        path: 'order/my',
+        name: 'MyOrder',
+        component: () => import('@/views/order/my/index.vue'),
+        meta: { title: '我的订单', hidden: true }
       }
     ]
   }
