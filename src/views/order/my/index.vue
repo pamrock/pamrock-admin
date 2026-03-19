@@ -18,7 +18,7 @@
           class="order-card" 
           v-for="order in orderList" 
           :key="order.id"
-          @click="viewDetail(order.id)"
+          @click="viewDetail(order.orderId)"
         >
           <div class="card-header">
             <div class="shop-info">
@@ -187,16 +187,16 @@ const getStatusText = (status) => {
   return map[status?.toString()] || status
 }
 
-const viewDetail = async (id) => {
+const viewDetail = async (orderId) => {
   dialogVisible.value = true
   detailLoading.value = true
   currentDetail.value = null
   try {
-    const res = await getOrderDetail({ orderId: id })
+    const res = await getOrderDetail({ orderId: orderId })
     if (res.success || res.code === 200 || res.code === 0) {
       currentDetail.value = res.data
     } else {
-      currentDetail.value = res.data || { id, serviceItem: '获取详情失败' }
+      currentDetail.value = res.data || { orderId, serviceItem: '获取详情失败' }
     }
   } catch (error) {
     console.error('获取详情失败:', error)
