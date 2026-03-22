@@ -100,6 +100,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { getMyOrderList, getOrderDetail } from '@/api/order'
+import { alipayPay } from '@/api/pay'
 import { ElMessage } from 'element-plus'
 
 const activeTab = ref('all')
@@ -206,10 +207,41 @@ const viewDetail = async (orderId) => {
   }
 }
 
-const goPay = (order) => {
-  ElMessage.success(`正在拉起支付... 订单：${order.orderId || order.id}，金额：¥${order.totalAmount}`)
-  // 模拟支付完成重新刷新列表
-  // setTimeout(() => { fetchList() }, 1000)
+const goPay = async (order) => {
+  ElMessage.success(`正在拉起支付,订单：${order.orderId || order.id}，金额：¥${order.totalAmount}`)
+  const orderId = order?.orderId || order?.id
+  if (!orderId) {
+    ElMessage.warning('订单号不存在，无法支付')
+    return
+  }
+
+  try {
+    const payRes = await alipayPay({ orderId })
+    const payForm = typeof payRes === 'string' ? payRes : payRes?.data
+    if (!payForm) {
+      ElMessage.warning('支付跳转失败，请在订单中心继续支付')
+      return
+    }
+
+    const wrapperId = 'alipay-pay-form-wrapper'
+    const oldWrapper = document.getElementById(wrapperId)
+    if (oldWrapper) oldWrapper.remove()
+
+    const div = document.createElement('div')
+    div.id = wrapperId
+    div.style.display = 'none'
+    div.innerHTML = payForm
+    document.body.appendChild(div)
+    const form = div.getElementsByTagName('form')[0]
+    if (form) {
+      form.submit()
+    } else {
+      ElMessage.warning('支付跳转失败，请在订单中心继续支付')
+    }
+  } catch (payError) {
+    console.error('Payment Error', payError)
+    ElMessage.warning('支付跳转失败，请在订单中心继续支付')
+  }
 }
 
 onMounted(() => {
