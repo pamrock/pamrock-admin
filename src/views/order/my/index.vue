@@ -18,7 +18,7 @@
           class="order-card" 
           v-for="order in orderList" 
           :key="order.id"
-          @click="viewDetail(order.orderId)"
+          @click="viewDetail(order.orderId || order.id)"
         >
           <div class="card-header">
             <div class="shop-info">
@@ -81,15 +81,15 @@
 
     <!-- 订单详情弹窗 -->
     <el-dialog v-model="dialogVisible" title="订单详情" width="500px">
-      <div class="detail-content" v-loading="detailLoading" v-if="currentDetail">
+      <div class="detail-content" v-loading="detailLoading" v-if="currentOrder">
         <el-descriptions :column="1" border>
-          <el-descriptions-item label="订单ID">{{ currentDetail.id }}</el-descriptions-item>
-          <el-descriptions-item label="服务项目">{{ currentDetail.serviceItem }}</el-descriptions-item>
-          <el-descriptions-item label="订单金额">¥ {{ currentDetail.totalAmount }}</el-descriptions-item>
+          <el-descriptions-item label="订单ID">{{ currentOrder.orderId}}</el-descriptions-item>
+          <el-descriptions-item label="服务项目">{{ currentOrder.serviceItem }}</el-descriptions-item>
+          <el-descriptions-item label="订单金额">¥ {{ currentOrder.totalAmount }}</el-descriptions-item>
           <el-descriptions-item label="订单状态">
-            <el-tag :type="getStatusType(currentDetail.status)">{{ getStatusText(currentDetail.status) }}</el-tag>
+            <el-tag :type="getStatusType((currentDetail && currentDetail.status) || currentOrder.status)">{{ getStatusText((currentDetail && currentDetail.status) || currentOrder.status) }}</el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="下单时间">{{ currentDetail.createTime }}</el-descriptions-item>
+          <el-descriptions-item label="下单时间">{{ currentOrder.createTime }}</el-descriptions-item>
           <!-- 其他详情字段可以根据实际接口返回补充 -->
         </el-descriptions>
       </div>
@@ -100,10 +100,8 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { getMyOrderList, getOrderDetail } from '@/api/order'
-import { useUserStore } from '@/store/modules/user'
 import { ElMessage } from 'element-plus'
 
-const userStore = useUserStore()
 const activeTab = ref('all')
 const loading = ref(false)
 const orderList = ref([])
@@ -117,6 +115,7 @@ const queryParams = reactive({
 const dialogVisible = ref(false)
 const detailLoading = ref(false)
 const currentDetail = ref(null)
+const currentOrder = ref(null)
 
 const fetchList = async () => {
   loading.value = true
@@ -191,12 +190,13 @@ const viewDetail = async (orderId) => {
   dialogVisible.value = true
   detailLoading.value = true
   currentDetail.value = null
+  currentOrder.value = orderList.value.find((o) => (o.orderId || o.id) === orderId) || { orderId }
   try {
     const res = await getOrderDetail({ orderId: orderId })
     if (res.success || res.code === 200 || res.code === 0) {
       currentDetail.value = res.data
     } else {
-      currentDetail.value = res.data || { orderId, serviceItem: '获取详情失败' }
+      currentDetail.value = res.data || { orderId }
     }
   } catch (error) {
     console.error('获取详情失败:', error)
@@ -207,7 +207,7 @@ const viewDetail = async (orderId) => {
 }
 
 const goPay = (order) => {
-  ElMessage.success(`正在拉起支付... 订单：${order.id}，金额：¥${order.totalAmount}`)
+  ElMessage.success(`正在拉起支付... 订单：${order.orderId || order.id}，金额：¥${order.totalAmount}`)
   // 模拟支付完成重新刷新列表
   // setTimeout(() => { fetchList() }, 1000)
 }

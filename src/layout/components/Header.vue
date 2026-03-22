@@ -120,9 +120,9 @@ const handleMyOrders = () => {
 
     <div class="header-right">
       <!-- 我的订单 -->
-      <div class="header-icon" @click="handleMyOrders" title="我的订单">
-        <el-icon><Tickets /></el-icon>
-      </div>
+      <el-icon class="header-icon" @click="handleMyOrders" title="我的订单">
+        <Tickets />
+      </el-icon>
 
       <!-- 暗黑模式切换 -->
       <el-icon class="header-icon" @click="appStore.toggleDark">
