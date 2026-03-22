@@ -101,7 +101,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { getMyOrderList, getOrderDetail } from '@/api/order'
 import { alipayPay } from '@/api/pay'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const activeTab = ref('all')
 const loading = ref(false)
@@ -187,6 +187,20 @@ const getStatusText = (status) => {
   return map[status?.toString()] || status
 }
 
+const parseCreateTimeGmt8 = (createTime) => {
+  if (!createTime || typeof createTime !== 'string') return null
+  const parts = createTime.trim().split(' ')
+  if (parts.length !== 2) return null
+  const [datePart, timePart] = parts
+  const dateNums = datePart.split('-').map((v) => Number(v))
+  const timeNums = timePart.split(':').map((v) => Number(v))
+  if (dateNums.length !== 3 || timeNums.length !== 3) return null
+  const [y, m, d] = dateNums
+  const [hh, mm, ss] = timeNums
+  if (![y, m, d, hh, mm, ss].every((n) => Number.isFinite(n))) return null
+  return new Date(Date.UTC(y, m - 1, d, hh - 8, mm, ss))
+}
+
 const viewDetail = async (orderId) => {
   dialogVisible.value = true
   detailLoading.value = true
@@ -208,13 +222,31 @@ const viewDetail = async (orderId) => {
 }
 
 const goPay = async (order) => {
-  ElMessage.success(`正在拉起支付,订单：${order.orderId || order.id}，金额：¥${order.totalAmount}`)
   const orderId = order?.orderId || order?.id
   if (!orderId) {
     ElMessage.warning('订单号不存在，无法支付')
     return
   }
 
+  const createAt = parseCreateTimeGmt8(order?.createTime)
+  if (!createAt) {
+    await ElMessageBox.alert('订单下单时间异常，请重新下单', '提示', {
+      confirmButtonText: '确定',
+      type: 'warning'
+    })
+    return
+  }
+
+  const diffMs = Date.now() - createAt.getTime()
+  if (diffMs > 30 * 60 * 1000) {
+    await ElMessageBox.alert('订单已超过下单时间 30 分钟，请重新下单', '提示', {
+      confirmButtonText: '确定',
+      type: 'warning'
+    })
+    return
+  }
+
+  ElMessage.success(`正在拉起支付,订单：${order.orderId || order.id}，金额：¥${order.totalAmount}`)
   try {
     const payRes = await alipayPay({ orderId })
     const payForm = typeof payRes === 'string' ? payRes : payRes?.data
