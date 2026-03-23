@@ -34,3 +34,8 @@ export function updateOrderStatus(data) {
 export function deleteOrder(data) {
   return request.post('/order/delete', data)
 }
+
+// 订单派单
+export function dispatchOrder(data) {
+  return request.post('/order/dispatchOrder', data)
+}

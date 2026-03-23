@@ -2,7 +2,8 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, Plus, Edit, Delete, View } from '@element-plus/icons-vue'
-import { getOrderList, getOrderDetail, addOrder, updateOrder, updateOrderStatus, deleteOrder } from '@/api/order'
+import { getOrderList, getOrderDetail, addOrder, updateOrder, updateOrderStatus, deleteOrder, dispatchOrder } from '@/api/order'
+import { getNotWorkingEmployees } from '@/api/employee'
 
 const loading = ref(false)
 const orderList = ref([])
@@ -40,6 +41,9 @@ const dialog = reactive({
   title: '',
   visible: false
 })
+
+const dispatchDialogVisible = ref(false)
+const availableEmployees = ref([])
 
 const formRef = ref(null)
 
@@ -125,6 +129,44 @@ function handleDelete(row) {
       }
     })
   }).catch(() => {})
+}
+
+// Dispatch Order
+function openDispatchDialog() {
+  loading.value = true
+  getNotWorkingEmployees().then(res => {
+    loading.value = false
+    if (res.success) {
+      // Handle both array and single object response
+      if (Array.isArray(res.data)) {
+        availableEmployees.value = res.data
+      } else if (res.data) {
+        availableEmployees.value = [res.data]
+      } else {
+        availableEmployees.value = []
+      }
+      dispatchDialogVisible.value = true
+    } else {
+      ElMessage.error(res.msg || '获取可派单员工失败')
+    }
+  }).catch(() => {
+    loading.value = false
+  })
+}
+
+function confirmDispatch(employeeId) {
+  dispatchOrder({ orderId: currentOrder.value.orderId, employeeId }).then(res => {
+    if (res.success) {
+      ElMessage.success('派单成功')
+      dispatchDialogVisible.value = false
+      // Update local data
+      currentOrder.value.employeeId = employeeId
+      // Refresh list
+      getList()
+    } else {
+      ElMessage.error(res.msg || '派单失败')
+    }
+  })
 }
 
 // Status Update
@@ -246,7 +288,19 @@ onMounted(() => {
             </el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="客户ID">{{ currentOrder.customerId }}</el-descriptions-item>
-          <el-descriptions-item label="员工ID">{{ currentOrder.employeeId }}</el-descriptions-item>
+          <el-descriptions-item label="员工ID">
+            {{ currentOrder.employeeId }}
+            <el-button 
+              v-if="!currentOrder.employeeId" 
+              type="primary" 
+              link 
+              size="small" 
+              @click="openDispatchDialog"
+              style="margin-left: 10px;"
+            >
+              派单
+            </el-button>
+          </el-descriptions-item>
           <el-descriptions-item label="创建时间">{{ currentOrder.createTime }}</el-descriptions-item>
           <el-descriptions-item label="更新时间">{{ currentOrder.updateTime }}</el-descriptions-item>
         </el-descriptions>
@@ -274,6 +328,27 @@ onMounted(() => {
         </div>
       </div>
     </el-drawer>
+
+    <!-- 派单弹窗 -->
+    <el-dialog v-model="dispatchDialogVisible" title="选择派单员工" width="700px" append-to-body>
+      <el-table :data="availableEmployees" border style="width: 100%" max-height="400px">
+        <el-table-column prop="id" label="员工ID" width="80" align="center" />
+        <el-table-column prop="realName" label="姓名" width="120" align="center" />
+        <el-table-column prop="phone" label="手机号" width="120" align="center" />
+        <el-table-column prop="gender" label="性别" width="80" align="center">
+          <template #default="scope">
+            {{ scope.row.gender === 'MALE' ? '男' : (scope.row.gender === 'FEMALE' ? '女' : scope.row.gender) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="starRating" label="星级" width="80" align="center" />
+        <el-table-column prop="completedOrders" label="已完成单量" width="100" align="center" />
+        <el-table-column label="操作" width="100" fixed="right" align="center">
+          <template #default="scope">
+            <el-button link type="primary" @click="confirmDispatch(scope.row.id)">选择</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
