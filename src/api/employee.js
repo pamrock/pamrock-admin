@@ -91,9 +91,10 @@ export function getTopEmployees(data) {
 }
 
 // 获取可派单员工列表
-export function getNotWorkingEmployees() {
+export function getNotWorkingEmployees(data) {
   return request({
     url: '/employee/notworking',
-    method: 'post'
+    method: 'post',
+    data
   })
 }

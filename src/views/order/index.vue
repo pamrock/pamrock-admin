@@ -134,7 +134,7 @@ function handleDelete(row) {
 // Dispatch Order
 function openDispatchDialog() {
   loading.value = true
-  getNotWorkingEmployees().then(res => {
+  getNotWorkingEmployees({}).then(res => {
     loading.value = false
     if (res.success) {
       // Handle both array and single object response
