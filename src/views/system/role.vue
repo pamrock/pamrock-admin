@@ -188,9 +188,6 @@ const handleDelete = (row) => {
 function getMenuAllCheckedKeys() {
   // 目前被选中的菜单节点
   let checkedKeys = menuRef.value.getCheckedKeys();
-  // 半选中的菜单节点
-  let halfCheckedKeys = menuRef.value.getHalfCheckedKeys();
-  checkedKeys.unshift.apply(checkedKeys, halfCheckedKeys);
   return checkedKeys;
 }
 
