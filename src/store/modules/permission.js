@@ -60,6 +60,10 @@ export function filterAsyncRoutes(routes, roles) {
   const res = []
 
   routes.forEach(route => {
+    if (route.menuType === 'F') {
+      return
+    }
+
     const tmp = {
       path: route.path,
       component: null,
