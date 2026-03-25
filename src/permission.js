@@ -28,7 +28,8 @@ router.beforeEach(async (to, from, next) => {
       }
     } else {
       // 未登录用户
-      if (to.path === '/user/login' || to.meta.requiresAuth === false) {
+      const userWhiteList = ['/user/login']
+      if (userWhiteList.includes(to.path)) {
         next()
       } else {
         // 其他页面都需要登录
