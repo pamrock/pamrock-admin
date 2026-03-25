@@ -1,14 +1,25 @@
 <template>
-  <div class="user-login-container">
-    <div class="login-header">
-      <h2>欢迎登录</h2>
-      <p>用户端服务平台</p>
+  <div class="user-register-container">
+    <div class="register-header">
+      <h2>注册账号</h2>
+      <p>欢迎加入用户端服务平台</p>
     </div>
     
-    <div class="login-form">
+    <div class="register-form">
       <el-input 
-        v-model="loginForm.username" 
-        placeholder="请输入用户名/手机号/邮箱" 
+        v-model="registerForm.account" 
+        placeholder="请输入手机号或邮箱" 
+        class="mb-20 input-item"
+        size="large"
+      >
+        <template #prefix>
+          <el-icon><User /></el-icon>
+        </template>
+      </el-input>
+
+      <el-input 
+        v-model="registerForm.username" 
+        placeholder="请输入用户名" 
         class="mb-20 input-item"
         size="large"
       >
@@ -18,7 +29,7 @@
       </el-input>
       
       <el-input 
-        v-model="loginForm.password" 
+        v-model="registerForm.password" 
         type="password" 
         placeholder="请输入密码" 
         class="mb-20 input-item"
@@ -32,17 +43,16 @@
 
       <el-button 
         type="primary" 
-        class="login-btn" 
+        class="register-btn" 
         size="large" 
-        @click="handleLogin"
+        @click="handleRegister"
         :loading="loading"
       >
-        {{ loading ? '登录中...' : '登 录' }}
+        {{ loading ? '注册中...' : '注 册' }}
       </el-button>
       
       <div class="links">
-        <span @click="router.push('/user/register')">注册账号</span>
-        <span>忘记密码？</span>
+        <span @click="router.push('/user/login')">已有账号？去登录</span>
       </div>
     </div>
   </div>
@@ -53,37 +63,51 @@ import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { User, Lock } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { login } from '@/api/login'
+import { register } from '@/api/login'
 
 const router = useRouter()
 const loading = ref(false)
 
-const loginForm = reactive({
+const registerForm = reactive({
+  account: '',
   username: '',
   password: ''
 })
 
-const handleLogin = async () => {
-  if (!loginForm.username || !loginForm.password) {
-    ElMessage.warning('请输入用户名/手机号/邮箱和密码')
+const handleRegister = async () => {
+  if (!registerForm.account || !registerForm.username || !registerForm.password) {
+    ElMessage.warning('请填写完整注册信息')
     return
+  }
+
+  // 判断 account 是手机号还是邮箱
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registerForm.account)
+  const isPhone = /^1[3-9]\d{9}$/.test(registerForm.account)
+
+  if (!isEmail && !isPhone) {
+    ElMessage.warning('请输入有效的手机号或邮箱')
+    return
+  }
+
+  const data = {
+    username: registerForm.username,
+    password: registerForm.password,
+    role: 2
+  }
+
+  if (isEmail) {
+    data.email = registerForm.account
+  } else {
+    data.phone = registerForm.account
   }
 
   try {
     loading.value = true
-    const { data } = await login({
-      username: loginForm.username,
-      password: loginForm.password
-    })
-    
-    // 区分客户系统的 token
-    const token = data.token
-    localStorage.setItem('user_token', token)
-    
-    ElMessage.success('登录成功')
-    router.push('/user/services')
+    await register(data)
+    ElMessage.success('注册成功')
+    router.push('/user/login')
   } catch (error) {
-    console.error('登录失败:', error)
+    console.error('注册失败:', error)
   } finally {
     loading.value = false
   }
@@ -91,7 +115,7 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-.user-login-container {
+.user-register-container {
   height: 100vh;
   width: 100%;
   max-width: 480px;
@@ -101,18 +125,18 @@ const handleLogin = async () => {
   box-sizing: border-box;
 }
 
-.login-header {
+.register-header {
   margin-top: 60px;
   margin-bottom: 50px;
 }
 
-.login-header h2 {
+.register-header h2 {
   font-size: 28px;
   color: #333;
   margin: 0 0 10px 0;
 }
 
-.login-header p {
+.register-header p {
   font-size: 14px;
   color: #999;
   margin: 0;
@@ -134,7 +158,7 @@ const handleLogin = async () => {
   box-shadow: 0 0 0 1px #1e3c72 inset !important;
 }
 
-.login-btn {
+.register-btn {
   width: 100%;
   border-radius: 8px;
   background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
@@ -146,13 +170,10 @@ const handleLogin = async () => {
 
 .links {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   margin-top: 20px;
   font-size: 14px;
   color: #1e3c72;
-}
-
-.links span {
   cursor: pointer;
 }
 </style>

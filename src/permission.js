@@ -15,29 +15,28 @@ router.beforeEach(async (to, from, next) => {
   const isUserRoute = to.path.startsWith('/user')
 
   if (isUserRoute) {
-    // === 用户端路由守卫逻辑 ===
-    const hasUserToken = !!localStorage.getItem('user_token')
-    console.log('hasUserToken:', hasUserToken)
-    
-    if (hasUserToken) {
-      if (to.path === '/user/login') {
-        // 已登录用户访问登录页，重定向到服务页
-        next({ path: '/user/services' })
+      // === 用户端路由守卫逻辑 ===
+      const hasUserToken = !!localStorage.getItem('user_token')
+
+      if (hasUserToken) {
+        if (to.path === '/user/login' || to.path === '/user/register') {
+          // 已登录用户访问登录/注册页，重定向到服务页
+          next({ path: '/user/services' })
+        } else {
+          next()
+        }
       } else {
-        next()
+        // 未登录用户
+        const userWhiteList = ['/user/login', '/user/register']
+        if (userWhiteList.includes(to.path) || to.meta.requiresAuth === false) {
+          next()
+        } else {
+          // 其他页面都需要登录
+          next(`/user/login?redirect=${to.path}`)
+        }
       }
-    } else {
-      // 未登录用户
-      const userWhiteList = ['/user/login']
-      if (userWhiteList.includes(to.path)) {
-        next()
-      } else {
-        // 其他页面都需要登录
-        next(`/user/login?redirect=${to.path}`)
-      }
+      return
     }
-    return
-  }
 
   // === 管理端路由守卫逻辑 ===
   // 已登录的情况
