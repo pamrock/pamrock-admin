@@ -17,6 +17,7 @@ router.beforeEach(async (to, from, next) => {
   if (isUserRoute) {
     // === 用户端路由守卫逻辑 ===
     const hasUserToken = !!localStorage.getItem('user_token')
+    console.log('hasUserToken:', hasUserToken)
     
     if (hasUserToken) {
       if (to.path === '/user/login') {
