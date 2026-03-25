@@ -158,7 +158,7 @@ const handleBackLogin = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
   overflow: hidden;
   position: relative;
 }
@@ -253,12 +253,12 @@ const handleBackLogin = () => {
   width: 50px;
   height: 50px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 24px;
+  font-size: 16px;
   font-weight: bold;
 }
 
@@ -287,7 +287,7 @@ const handleBackLogin = () => {
   font-size: 16px;
   letter-spacing: 2px;
   margin-top: 10px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
   border: none;
 }
 

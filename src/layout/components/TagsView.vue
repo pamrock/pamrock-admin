@@ -161,8 +161,8 @@ const navigateToTag = (path) => {
 }
 
 .tag-item.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  color: #F8F9FA;
 }
 
 .tag-close {
@@ -213,12 +213,12 @@ const navigateToTag = (path) => {
 
 .menu-item:hover {
   background-color: #f0f2f5;
-  color: #667eea;
+  color: #1e3c72;
 }
 
 .dark .menu-item:hover {
   background-color: #363636;
-  color: #667eea;
+  color: #1e3c72;
 }
 
 .menu-item .el-icon {
