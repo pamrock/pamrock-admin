@@ -16,6 +16,12 @@ export const constantRoutes = [
     meta: { requiresAuth: false, title: '用户登录', hidden: true }
   },
   {
+    path: '/user/register',
+    name: 'UserRegister',
+    component: () => import('@/views/user/register.vue'),
+    meta: { requiresAuth: false, title: '用户注册', hidden: true }
+  },
+  {
     path: '/user',
     component: UserLayout,
     redirect: '/user/services',
