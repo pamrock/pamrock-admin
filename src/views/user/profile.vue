@@ -63,7 +63,6 @@ import { ElMessage } from 'element-plus'
 const router = useRouter()
 
 const handleLogout = () => {
-  localStorage.removeItem('user_token')
   ElMessage.success('已退出登录')
   router.push('/user/login')
 }

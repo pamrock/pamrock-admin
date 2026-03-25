@@ -19,7 +19,7 @@ export const constantRoutes = [
     path: '/user',
     component: UserLayout,
     redirect: '/user/services',
-    meta: { title: '用户端', hidden: true },
+    meta: { requiresAuth: false, title: '用户端', hidden: true },
     children: [
       {
         path: 'services',
