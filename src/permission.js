@@ -10,7 +10,34 @@ router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
   const permissionStore = usePermissionStore()
   const hasTokenFlag = hasToken()
+  
+  // 判断是否是前台用户路由
+  const isUserRoute = to.path.startsWith('/user')
 
+  if (isUserRoute) {
+    // === 用户端路由守卫逻辑 ===
+    const hasUserToken = !!localStorage.getItem('user_token')
+    
+    if (hasUserToken) {
+      if (to.path === '/user/login') {
+        // 已登录用户访问登录页，重定向到服务页
+        next({ path: '/user/services' })
+      } else {
+        next()
+      }
+    } else {
+      // 未登录用户
+      if (to.path === '/user/login' || to.meta.requiresAuth === false) {
+        next()
+      } else {
+        // 其他页面都需要登录
+        next(`/user/login?redirect=${to.path}`)
+      }
+    }
+    return
+  }
+
+  // === 管理端路由守卫逻辑 ===
   // 已登录的情况
   if (hasTokenFlag) {
     // 验证 Token 是否有效
@@ -60,11 +87,11 @@ router.beforeEach(async (to, from, next) => {
   } else {
     // 未登录的情况
     // 如果访问的是不需要认证的页面，直接进入
-    if (to.meta.requiresAuth === false) {
+    if (to.meta.requiresAuth === false || to.path === '/login' || to.path === '/register') {
       next()
     } else {
       // 其他页面都需要登录
-      next('/login')
+      next(`/login?redirect=${to.path}`)
     }
   }
 })

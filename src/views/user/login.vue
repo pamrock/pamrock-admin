@@ -59,7 +59,8 @@ const handleLogin = () => {
     ElMessage.warning('请输入手机号和密码')
     return
   }
-  // 模拟登录成功，跳转到服务列表页
+  // 模拟登录成功，设置用户独立 token，跳转到服务列表页
+  localStorage.setItem('user_token', 'mock_user_token_12345')
   ElMessage.success('登录成功')
   router.push('/user/services')
 }
