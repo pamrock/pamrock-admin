@@ -2,12 +2,45 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 
 import Layout from '@/layout/index.vue'
+import UserLayout from '@/views/user/layout.vue'
 import Login from '@/views/login/index.vue'
 import Register from '@/views/register/index.vue'
 import Dashboard from '@/views/dashboard/index.vue'
 
 // 静态路由（无需权限即可访问或基础路由）
 export const constantRoutes = [
+  {
+    path: '/user/login',
+    name: 'UserLogin',
+    component: () => import('@/views/user/login.vue'),
+    meta: { requiresAuth: false, title: '用户登录', hidden: true }
+  },
+  {
+    path: '/user',
+    component: UserLayout,
+    redirect: '/user/services',
+    meta: { requiresAuth: false, title: '用户端', hidden: true },
+    children: [
+      {
+        path: 'services',
+        name: 'UserServices',
+        component: () => import('@/views/user/services.vue'),
+        meta: { title: '服务' }
+      },
+      {
+        path: 'orders',
+        name: 'UserOrders',
+        component: () => import('@/views/user/orders.vue'),
+        meta: { title: '订单' }
+      },
+      {
+        path: 'profile',
+        name: 'UserProfile',
+        component: () => import('@/views/user/profile.vue'),
+        meta: { title: '我的' }
+      }
+    ]
+  },
   {
     path: '/login',
     name: 'Login',

@@ -73,8 +73,8 @@ router.beforeEach(async (to, from, next) => {
 router.afterEach((to) => {
   const tagsViewStore = useTagsViewStore()
 
-  // 排除登录和注册页面
-  if (to.path !== '/login' && to.path !== '/register') {
+  // 排除登录、注册以及前台用户页面
+  if (to.path !== '/login' && to.path !== '/register' && !to.path.startsWith('/user')) {
     tagsViewStore.addTag({
       path: to.path,
       title: to.meta?.title || to.name || 'Unknown',
