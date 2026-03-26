@@ -6,7 +6,7 @@
         :src="userInfo.avatar || 'https://cube.elemecdn.com/0/88/03b0f1ac001e48612fc7f392099a41jpeg.jpeg'"
       />
       <div class="user-info">
-        <h3>{{ userInfo.username || '微信用户' }}</h3>
+        <h3>{{ userInfo.realName || userInfo.username || '微信用户' }}</h3>
         <p>{{ userInfo.phone || '未设置手机号' }}</p>
         <p>{{ userInfo.email || '未设置邮箱' }}</p>
       </div>
@@ -61,11 +61,20 @@
               <div class="avatar-edit-hint">点击更换</div>
             </el-upload>
           </el-form-item>
+          <el-form-item label="姓名" prop="realName">
+            <el-input v-model="profileForm.realName" placeholder="请输入真实姓名" />
+          </el-form-item>
           <el-form-item label="手机" prop="phone">
             <el-input v-model="profileForm.phone" placeholder="请输入手机号" />
           </el-form-item>
           <el-form-item label="邮箱" prop="email">
             <el-input v-model="profileForm.email" placeholder="请输入邮箱" />
+          </el-form-item>
+          <el-form-item label="地址">
+            <div class="address-field">
+              <el-input :model-value="profileForm.addressText" placeholder="未设置地址" readonly />
+              <el-button type="primary" plain @click="handleOpenAddressDialog">管理地址</el-button>
+            </div>
           </el-form-item>
           <el-form-item label="性别" prop="gender">
             <el-select v-model="profileForm.gender" placeholder="请选择性别" style="width: 100%">
@@ -100,6 +109,15 @@
         <el-button type="primary" :loading="savingPassword" @click="handleChangePassword">确定</el-button>
       </template>
     </el-dialog>
+
+    <AddressDialog
+      v-model:visible="showAddressDialog"
+      :customer-id="Number(userInfo.customerId || userInfo.id || 0)"
+      :user-id="Number(userInfo.id || 0)"
+      mobile-mode
+      @refresh="handleAddressRefresh"
+      @select="handleAddressSelect"
+    />
   </div>
 </template>
 
@@ -108,8 +126,10 @@ import { onMounted, reactive, ref } from 'vue'
 import { ArrowRight, Lock, Setting } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { regionData } from 'element-china-area-data'
 import { getUserInfo, updatePassword, updateUserBySelf } from '@/api/user'
-import { updateCustomer } from '@/api/customer'
+import { getCustomerAddressList, updateCustomer } from '@/api/customer'
+import AddressDialog from '@/views/client/components/AddressDialog.vue'
 import { removeUserToken } from '@/utils/auth'
 
 const router = useRouter()
@@ -118,6 +138,7 @@ const savingProfile = ref(false)
 const savingPassword = ref(false)
 const showEditDrawer = ref(false)
 const showPasswordDialog = ref(false)
+const showAddressDialog = ref(false)
 const uploadFile = ref(null)
 const profileFormRef = ref(null)
 const passwordFormRef = ref(null)
@@ -126,6 +147,7 @@ const userInfo = reactive({
   id: null,
   customerId: null,
   username: '',
+  realName: '',
   phone: '',
   email: '',
   avatar: '',
@@ -133,8 +155,10 @@ const userInfo = reactive({
 })
 
 const profileForm = reactive({
+  realName: '',
   phone: '',
   email: '',
+  addressText: '',
   avatar: '',
   gender: 0
 })
@@ -146,15 +170,34 @@ const passwordForm = reactive({
 })
 
 const profileRules = {
-  phone: [
-    { required: true, message: '请输入手机号', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入有效手机号', trigger: 'blur' }
-  ],
-  email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确邮箱', trigger: ['blur', 'change'] }
-  ],
-  gender: [{ required: true, message: '请选择性别', trigger: 'change' }]
+  phone: [{
+    validator: (rule, value, callback) => {
+      if (!value) {
+        callback()
+        return
+      }
+      if (/^1[3-9]\d{9}$/.test(value)) {
+        callback()
+      } else {
+        callback(new Error('请输入有效手机号'))
+      }
+    },
+    trigger: 'blur'
+  }],
+  email: [{
+    validator: (rule, value, callback) => {
+      if (!value) {
+        callback()
+        return
+      }
+      if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        callback()
+      } else {
+        callback(new Error('请输入正确邮箱'))
+      }
+    },
+    trigger: ['blur', 'change']
+  }]
 }
 
 const validatePass2 = (rule, value, callback) => {
@@ -180,11 +223,69 @@ const passwordRules = {
 }
 
 const syncProfileForm = () => {
+  profileForm.realName = userInfo.realName || ''
   profileForm.phone = userInfo.phone || ''
   profileForm.email = userInfo.email || ''
   profileForm.avatar = userInfo.avatar || ''
   profileForm.gender = userInfo.gender ?? 0
+  profileForm.addressText = ''
   uploadFile.value = null
+}
+
+const getAreaText = (provinceCode, cityCode, districtCode) => {
+  const pCode = provinceCode !== undefined && provinceCode !== null ? String(provinceCode) : ''
+  const cCode = cityCode !== undefined && cityCode !== null ? String(cityCode) : ''
+  const dCode = districtCode !== undefined && districtCode !== null ? String(districtCode) : ''
+  let province = ''
+  let city = ''
+  let district = ''
+  const pItem = regionData.find(item => item.value === pCode)
+  if (pItem) {
+    province = pItem.label
+    if (cCode && pItem.children) {
+      const cItem = pItem.children.find(item => item.value === cCode)
+      if (cItem) {
+        city = cItem.label
+        if (dCode && cItem.children) {
+          const dItem = cItem.children.find(item => item.value === dCode)
+          if (dItem) {
+            district = dItem.label
+          }
+        }
+      }
+    }
+  }
+  return `${province} ${city} ${district}`.trim()
+}
+
+const formatAddressText = (address) => {
+  if (!address) return ''
+  const regionText = getAreaText(address.province, address.city, address.district)
+  const prefix = regionText || [address.province, address.city, address.district].filter(Boolean).join(' ')
+  return [prefix, address.detailAddress].filter(Boolean).join(' ')
+}
+
+const loadAddressSummary = async () => {
+  const customerId = userInfo.customerId || userInfo.id
+  if (!customerId || !userInfo.id) {
+    profileForm.addressText = ''
+    return
+  }
+  try {
+    const res = await getCustomerAddressList({
+      customerId,
+      userId: userInfo.id,
+      pageNo: 1,
+      pageSize: 100
+    })
+    if (res.success) {
+      const list = res.data?.records || []
+      const defaultAddress = list.find(item => item.isDefault === 1) || list[0]
+      profileForm.addressText = formatAddressText(defaultAddress)
+    }
+  } catch (error) {
+    profileForm.addressText = ''
+  }
 }
 
 const loadUserInfo = async () => {
@@ -196,11 +297,13 @@ const loadUserInfo = async () => {
       userInfo.id = data.id || null
       userInfo.customerId = data.customerId || null
       userInfo.username = data.username || data.realName || '微信用户'
+      userInfo.realName = data.realName || ''
       userInfo.phone = data.phone || ''
       userInfo.email = data.email || ''
       userInfo.avatar = data.avatar || ''
       userInfo.gender = data.gender ?? 0
       syncProfileForm()
+      await loadAddressSummary()
     } else {
       ElMessage.error(res.msg || '获取用户信息失败')
     }
@@ -235,6 +338,7 @@ const handleSaveProfile = async () => {
       const customerData = {
         id: customerId,
         userId: userInfo.id,
+        realName: profileForm.realName,
         phone: profileForm.phone,
         email: profileForm.email,
         gender: profileForm.gender
@@ -253,6 +357,22 @@ const handleSaveProfile = async () => {
       savingProfile.value = false
     }
   })
+}
+
+const handleOpenAddressDialog = () => {
+  if (!userInfo.id) {
+    ElMessage.warning('用户信息尚未加载完成')
+    return
+  }
+  showAddressDialog.value = true
+}
+
+const handleAddressSelect = (item) => {
+  profileForm.addressText = formatAddressText(item)
+}
+
+const handleAddressRefresh = async () => {
+  await loadAddressSummary()
 }
 
 const handleChangePassword = async () => {
@@ -377,6 +497,13 @@ onMounted(() => {
 
 .profile-form {
   margin-top: 8px;
+}
+
+.address-field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  width: 100%;
 }
 
 .avatar-uploader {
