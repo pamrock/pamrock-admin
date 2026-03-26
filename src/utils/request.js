@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { getToken, removeToken } from './auth'
+import { getToken, getUserToken, removeToken, removeUserToken } from './auth'
 import { ElMessage } from 'element-plus'
 
 const instance = axios.create({
@@ -10,7 +10,9 @@ const instance = axios.create({
 // 请求拦截器
 instance.interceptors.request.use(
   config => {
-    const token = getToken()
+    const currentPath = (window.location.hash || '').replace(/^#/, '').split('?')[0]
+    const isUserRoute = currentPath.startsWith('/user')
+    const token = isUserRoute ? getUserToken() : getToken()
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -33,9 +35,15 @@ instance.interceptors.response.use(
   },
   error => {
     if (error.response?.status === 401 || error.response?.status === 403) {
-      // 未授权，清除token并跳转到登录页
-      removeToken()
-      window.location.href = '/#/login?session=expired'
+      const currentPath = (window.location.hash || '').replace(/^#/, '').split('?')[0]
+      const isUserRoute = currentPath.startsWith('/user')
+      if (isUserRoute) {
+        removeUserToken()
+        window.location.href = '/#/user/login?session=expired'
+      } else {
+        removeToken()
+        window.location.href = '/#/login?session=expired'
+      }
     }
     return Promise.reject(error)
   }

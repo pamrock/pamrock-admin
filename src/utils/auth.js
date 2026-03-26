@@ -5,6 +5,7 @@ import { isUserInActive } from '@/api/user'
  */
 
 const TOKEN_KEY = 'admin_token'
+const USER_TOKEN_KEY = 'user_token'
 
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY)
@@ -20,6 +21,22 @@ export function removeToken() {
 
 export function hasToken() {
   return !!getToken()
+}
+
+export function getUserToken() {
+  return localStorage.getItem(USER_TOKEN_KEY)
+}
+
+export function setUserToken(token) {
+  localStorage.setItem(USER_TOKEN_KEY, token)
+}
+
+export function removeUserToken() {
+  localStorage.removeItem(USER_TOKEN_KEY)
+}
+
+export function hasUserToken() {
+  return !!getUserToken()
 }
 
 /**
