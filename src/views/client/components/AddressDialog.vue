@@ -15,6 +15,10 @@ const props = defineProps({
   visible: {
     type: Boolean,
     required: true
+  },
+  mobileMode: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -255,7 +259,8 @@ const handleSelect = (item) => {
   <el-dialog 
     :model-value="visible" 
     title="客户地址管理" 
-    width="800px"
+    :width="props.mobileMode ? '356px' : '800px'"
+    :class="['address-dialog', { 'is-mobile-mode': props.mobileMode }]"
     @update:model-value="val => emit('update:visible', val)"
   >
     <div class="address-management" v-loading="loading">
@@ -264,7 +269,7 @@ const handleSelect = (item) => {
       </div>
 
       <el-empty v-if="!tableData.length" description="暂无收货地址" />
-      <div v-else class="address-list">
+      <div v-else :class="['address-list', { 'single-column': props.mobileMode }]">
         <div 
           v-for="item in tableData" 
           :key="item.id" 
@@ -304,7 +309,13 @@ const handleSelect = (item) => {
     </div>
 
     <!-- 新增 / 编辑 地址对话框 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px" append-to-body>
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogTitle"
+      :width="props.mobileMode ? '332px' : '500px'"
+      :class="['address-edit-dialog', { 'is-mobile-mode': props.mobileMode }]"
+      append-to-body
+    >
       <el-form ref="addressFormRef" :model="addressForm" :rules="addressRules" label-width="100px">
         <el-form-item label="联系人" prop="contactName">
           <el-input v-model="addressForm.contactName" placeholder="请输入联系人姓名" />
@@ -357,6 +368,10 @@ const handleSelect = (item) => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 16px;
+}
+
+.address-list.single-column {
+  grid-template-columns: 1fr;
 }
 
 .address-card {
@@ -423,6 +438,21 @@ const handleSelect = (item) => {
 
 .default-tag {
   margin-left: auto;
+}
+
+:deep(.address-dialog.is-mobile-mode .el-dialog) {
+  width: min(calc(100vw - 24px), 356px) !important;
+  margin: 0 auto !important;
+  border-radius: 14px !important;
+}
+
+:deep(.address-dialog.is-mobile-mode .el-dialog__body) {
+  padding: 12px;
+}
+
+:deep(.address-edit-dialog.is-mobile-mode .el-dialog) {
+  width: min(calc(100vw - 32px), 332px) !important;
+  border-radius: 12px !important;
 }
 
 @media (max-width: 768px) {
