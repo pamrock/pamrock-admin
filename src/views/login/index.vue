@@ -75,7 +75,7 @@ const handleRegister = () => {
       <div class="login-header">
         <div class="logo">
           <div class="logo-img">Admin</div>
-          <h1>管理系统</h1>
+          <h1>家政公司经营管理系统</h1>
         </div>
       </div>
 

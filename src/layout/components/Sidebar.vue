@@ -53,7 +53,7 @@ const getSubMenuIndex = (menu, menuIndex) => {
   <div class="sidebar">
     <div class="logo">
       <div class="logo-img">Admin</div>
-      <span class="logo-text" v-show="appStore.sidebar.opened">管理系统</span>
+      <span class="logo-text" v-show="appStore.sidebar.opened">家政公司经营管理系统</span>
     </div>
     
     <el-menu

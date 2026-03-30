@@ -111,5 +111,5 @@ router.afterEach((to) => {
   }
 
   // 设置页面标题
-  document.title = (to.meta?.title || 'Admin') + ' - 管理系统'
+  document.title = (to.meta?.title || 'Admin') + ' - 家政公司经营管理系统'
 })
