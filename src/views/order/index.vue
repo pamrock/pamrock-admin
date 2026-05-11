@@ -1,9 +1,10 @@
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, Plus, Edit, Delete, View } from '@element-plus/icons-vue'
 import { getOrderList, getOrderDetail, addOrder, updateOrder, updateOrderStatus, deleteOrder, dispatchOrder } from '@/api/order'
 import { getNotWorkingEmployees } from '@/api/employee'
+import { getMessages } from '@/api/message'
 
 const loading = ref(false)
 const orderList = ref([])
@@ -44,6 +45,15 @@ const dialog = reactive({
 
 const dispatchDialogVisible = ref(false)
 const availableEmployees = ref([])
+
+// Chat history state
+const detailActiveTab = ref('info')
+const chatLoading = ref(false)
+const chatMessages = ref([])
+const chatTotal = ref(0)
+const chatPageNo = ref(1)
+const chatPageSize = ref(20)
+const currentOrderIdForChat = ref('')
 
 const formRef = ref(null)
 
@@ -182,6 +192,34 @@ function handleStatusChange(row, newStatus) {
   })
 }
 
+// Fetch chat messages
+const fetchChatMessages = async () => {
+  if (!currentOrderIdForChat.value) return
+  chatLoading.value = true
+  try {
+    const res = await getMessages(currentOrderIdForChat.value, {
+      pageNo: chatPageNo.value,
+      pageSize: chatPageSize.value
+    })
+    const data = res.data || {}
+    chatMessages.value = data.records || []
+    chatTotal.value = data.total || 0
+  } catch (e) {
+    chatMessages.value = []
+    chatTotal.value = 0
+  } finally {
+    chatLoading.value = false
+  }
+}
+
+// Watch tab switch to load chat messages when user clicks the chat tab
+watch(detailActiveTab, (newTab) => {
+  if (newTab === 'chat') {
+    currentOrderIdForChat.value = currentOrder.value.orderId
+    fetchChatMessages()
+  }
+})
+
 onMounted(() => {
   getList()
 })
@@ -279,54 +317,92 @@ onMounted(() => {
 
     <!-- 详情抽屉 -->
     <el-drawer v-model="showDetail" title="订单详情" size="50%">
-      <div class="detail-container">
-        <el-descriptions title="基础信息" :column="2" border>
-          <el-descriptions-item label="订单号">{{ currentOrder.orderId }}</el-descriptions-item>
-          <el-descriptions-item label="当前状态">
-            <el-tag :type="getStatusType(currentOrder.status)">
-              {{ getStatusLabel(currentOrder.status) }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="客户ID">{{ currentOrder.customerId }}</el-descriptions-item>
-          <el-descriptions-item label="员工ID">
-            {{ currentOrder.employeeId }}
-            <el-button 
-              v-if="!currentOrder.employeeId" 
-              type="primary" 
-              link 
-              size="small" 
-              @click="openDispatchDialog"
-              style="margin-left: 10px;"
-            >
-              派单
-            </el-button>
-          </el-descriptions-item>
-          <el-descriptions-item label="创建时间">{{ currentOrder.createTime }}</el-descriptions-item>
-          <el-descriptions-item label="更新时间">{{ currentOrder.updateTime }}</el-descriptions-item>
-        </el-descriptions>
+      <el-tabs v-model="detailActiveTab" v-if="showDetail">
+        <el-tab-pane label="订单信息" name="info">
+          <div class="detail-container">
+            <el-descriptions title="基础信息" :column="2" border>
+              <el-descriptions-item label="订单号">{{ currentOrder.orderId }}</el-descriptions-item>
+              <el-descriptions-item label="当前状态">
+                <el-tag :type="getStatusType(currentOrder.status)">
+                  {{ getStatusLabel(currentOrder.status) }}
+                </el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="客户ID">{{ currentOrder.customerId }}</el-descriptions-item>
+              <el-descriptions-item label="员工ID">
+                {{ currentOrder.employeeId }}
+                <el-button
+                  v-if="!currentOrder.employeeId"
+                  type="primary"
+                  link
+                  size="small"
+                  @click="openDispatchDialog"
+                  style="margin-left: 10px;"
+                >
+                  派单
+                </el-button>
+              </el-descriptions-item>
+              <el-descriptions-item label="创建时间">{{ currentOrder.createTime }}</el-descriptions-item>
+              <el-descriptions-item label="更新时间">{{ currentOrder.updateTime }}</el-descriptions-item>
+            </el-descriptions>
 
-        <el-divider />
+            <el-divider />
 
-        <el-descriptions title="服务详情" :column="1" border>
-          <el-descriptions-item label="明细号">{{ currentDetail.orderDetailNo }}</el-descriptions-item>
-          <el-descriptions-item label="服务日期">{{ currentDetail.serviceDate }}</el-descriptions-item>
-          <el-descriptions-item label="服务地址">{{ currentDetail.serviceAddress }}</el-descriptions-item>
-          <el-descriptions-item label="上门时间段">{{ currentDetail.visitTimeRange }}</el-descriptions-item>
-          <el-descriptions-item label="服务时段">{{ currentDetail.serviceTimeRange }}</el-descriptions-item>
-          <el-descriptions-item label="实际开始时间">{{ currentDetail.actualStartTime }}</el-descriptions-item>
-          <el-descriptions-item label="实际结束时间">{{ currentDetail.actualEndTime }}</el-descriptions-item>
-          <el-descriptions-item label="取消原因" v-if="currentDetail.cancelReason">{{ currentDetail.cancelReason }}</el-descriptions-item>
-        </el-descriptions>
+            <el-descriptions title="服务详情" :column="1" border>
+              <el-descriptions-item label="明细号">{{ currentDetail.orderDetailNo }}</el-descriptions-item>
+              <el-descriptions-item label="服务日期">{{ currentDetail.serviceDate }}</el-descriptions-item>
+              <el-descriptions-item label="服务地址">{{ currentDetail.serviceAddress }}</el-descriptions-item>
+              <el-descriptions-item label="上门时间段">{{ currentDetail.visitTimeRange }}</el-descriptions-item>
+              <el-descriptions-item label="服务时段">{{ currentDetail.serviceTimeRange }}</el-descriptions-item>
+              <el-descriptions-item label="实际开始时间">{{ currentDetail.actualStartTime }}</el-descriptions-item>
+              <el-descriptions-item label="实际结束时间">{{ currentDetail.actualEndTime }}</el-descriptions-item>
+              <el-descriptions-item label="取消原因" v-if="currentDetail.cancelReason">{{ currentDetail.cancelReason }}</el-descriptions-item>
+            </el-descriptions>
 
-        <el-divider />
+            <el-divider />
 
-        <div class="status-action">
-          <h3>状态管理</h3>
-          <el-radio-group v-model="currentOrder.status" @change="(val) => handleStatusChange(currentOrder, val)">
-            <el-radio-button v-for="item in statusOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio-button>
-          </el-radio-group>
-        </div>
-      </div>
+            <div class="status-action">
+              <h3>状态管理</h3>
+              <el-radio-group v-model="currentOrder.status" @change="(val) => handleStatusChange(currentOrder, val)">
+                <el-radio-button v-for="item in statusOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio-button>
+              </el-radio-group>
+            </div>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane label="沟通记录" name="chat">
+          <div v-loading="chatLoading">
+            <div v-if="chatMessages.length === 0 && !chatLoading" style="text-align:center;padding:40px;color:#999;">
+              暂无沟通记录
+            </div>
+            <div v-for="msg in chatMessages" :key="msg.id" style="padding:12px;margin-bottom:8px;background:#f8f9fa;border-radius:8px;">
+              <div style="margin-bottom:6px;display:flex;align-items:center;gap:8px;">
+                <el-tag :type="msg.senderRole === 'customer' ? 'success' : 'primary'" size="small">
+                  {{ msg.senderRole === 'customer' ? '客户' : '员工' }}
+                </el-tag>
+                <span style="font-size:12px;color:#999;">{{ msg.createTime }}</span>
+              </div>
+              <div v-if="msg.msgType === 'image'">
+                <el-image
+                  :src="msg.imageUrl"
+                  style="max-width:200px;max-height:200px;"
+                  :preview-src-list="[msg.imageUrl]"
+                  fit="contain"
+                />
+              </div>
+              <div v-else style="font-size:14px;color:#333;">{{ msg.content }}</div>
+            </div>
+            <div v-if="chatTotal > chatPageSize" style="text-align:center;margin-top:12px;">
+              <el-pagination
+                small
+                layout="prev, pager, next"
+                :total="chatTotal"
+                :page-size="chatPageSize"
+                v-model:current-page="chatPageNo"
+                @current-change="fetchChatMessages"
+              />
+            </div>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
     </el-drawer>
 
     <!-- 派单弹窗 -->
