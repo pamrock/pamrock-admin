@@ -39,3 +39,8 @@ export function deleteOrder(data) {
 export function dispatchOrder(data) {
   return request.post('/order/dispatchOrder', data)
 }
+
+// 退款取消订单
+export function refundOrder(data) {
+  return request.post('/order/refund', data)
+}
