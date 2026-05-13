@@ -49,12 +49,22 @@
             </div>
           </div>
           
-          <div class="card-footer" v-if="isUnpaid(order.status)">
-            <el-button 
-              type="warning" 
-              plain 
-              round 
-              size="small" 
+          <div class="card-footer" v-if="isUnpaid(order.status) || isRefundable(order.status)">
+            <el-button
+              v-if="isRefundable(order.status)"
+              size="small"
+              type="danger"
+              round
+              @click.stop="handleRefund(order)"
+            >
+              取消订单
+            </el-button>
+            <el-button
+              v-if="isUnpaid(order.status)"
+              type="warning"
+              plain
+              round
+              size="small"
               @click.stop="goPay(order)"
             >
               去支付
@@ -99,7 +109,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { getMyOrderList, getOrderDetail } from '@/api/order'
+import { getMyOrderList, getOrderDetail, refundOrder } from '@/api/order'
 import { alipayPay } from '@/api/pay'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -165,6 +175,31 @@ const isUnpaid = (status) => {
   if (!status) return false
   const s = status.toString()
   return s === '1'
+}
+
+function isRefundable(status) {
+  return status?.toString() === '2' || status?.toString() === '3'
+}
+
+function handleRefund(order) {
+  const orderId = order.orderId || order.id
+  ElMessageBox.confirm(
+    '确认取消订单吗？\n取消后系统将自动退款，金额将原路返回。',
+    '提示',
+    { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
+  ).then(async () => {
+    try {
+      const res = await refundOrder({ orderId })
+      if (res.success) {
+        ElMessage.success('退款成功')
+        fetchList()
+      } else {
+        ElMessage.error(res.msg || '退款失败')
+      }
+    } catch (e) {
+      ElMessage.error('退款失败')
+    }
+  }).catch(() => {})
 }
 
 const getStatusType = (status) => {
