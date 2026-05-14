@@ -140,7 +140,7 @@ const submitForm = async () => {
     if (valid) {
       try {
         if (formData.userId) {
-          const res = await updateEmployee({ id: formData.userId} )
+          const res = await updateEmployee({ id: formData.userId, ...formData} )
           if (res.success) {
             ElMessage.success('更新成功')
           } else {
