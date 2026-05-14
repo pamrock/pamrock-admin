@@ -293,8 +293,8 @@ onMounted(() => {
         </el-table-column>
         <el-table-column prop="healthCertificate" label="健康证" width="100px">
           <template #default="scope">
-            <el-tag :type="scope.row.healthCertificate === 1 ? 'success' : scope.row.healthCertificate === 2 ? 'danger' : 'info'">
-              {{ scope.row.healthCertificate === 1 ? '有效' : scope.row.healthCertificate === 2 ? '过期' : '无' }}
+            <el-tag :type="scope.row.healthCertificate === 'VALID' ? 'success' : scope.row.healthCertificate === 'EXPIRED' ? 'danger' : 'info'">
+              {{ scope.row.healthCertificate === 'VALID' ? '有效' : scope.row.healthCertificate === 'EXPIRED' ? '过期' : '无' }}
             </el-tag>
           </template>
         </el-table-column>
