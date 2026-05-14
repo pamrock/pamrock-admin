@@ -272,6 +272,18 @@ onMounted(() => {
             <el-tag :type="getStatusTag(row.status)">{{ getStatusLabel(row.status) }}</el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="workYears" label="从业年限" width="100px">
+          <template #default="scope">
+            {{ scope.row.workYears ?? 0 }} 年
+          </template>
+        </el-table-column>
+        <el-table-column prop="healthCertificate" label="健康证" width="100px">
+          <template #default="scope">
+            <el-tag :type="scope.row.healthCertificate === 1 ? 'success' : scope.row.healthCertificate === 2 ? 'danger' : 'info'">
+              {{ scope.row.healthCertificate === 1 ? '有效' : scope.row.healthCertificate === 2 ? '过期' : '无' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="星级" width="173">
           <template #default="{ row }">
             <el-rate
