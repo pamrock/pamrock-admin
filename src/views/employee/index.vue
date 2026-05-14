@@ -56,7 +56,8 @@ const formData = reactive({
   idCard: '',
   birthDate: '',
   healthCertificate: 0,
-  certificateExpiryDate: ''
+  certificateExpiryDate: '',
+  workYears: 0
 })
 
 const rules = {
@@ -112,6 +113,7 @@ const handleAdd = () => {
   formData.birthDate = ''
   formData.healthCertificate = 0
   formData.certificateExpiryDate = ''
+  formData.workYears = 0
   dialogVisible.value = true
 }
 
@@ -125,6 +127,7 @@ const handleEdit = (row) => {
   formData.birthDate = row.birthDate
   formData.healthCertificate = row.healthCertificate === 'VALID' ? 1 : (row.healthCertificate === 'EXPIRED' ? 2 : 0)
   formData.certificateExpiryDate = row.certificateExpiryDate
+  formData.workYears = row.workYears ?? 0
   dialogVisible.value = true
 }
 
@@ -354,6 +357,9 @@ onMounted(() => {
            <el-select v-model="formData.healthCertificate" style="width: 100%">
              <el-option v-for="item in healthOptions" :key="item.value" :label="item.label" :value="item.value" />
            </el-select>
+        </el-form-item>
+        <el-form-item label="从业年限">
+          <el-input-number v-model="formData.workYears" :min="0" :step="1" placeholder="请输入从业年限" />
         </el-form-item>
         <el-form-item label="证件有效期" v-if="formData.healthCertificate !== 0">
            <el-date-picker
