@@ -50,6 +50,7 @@ const dialogTitle = ref('')
 const formRef = ref(null)
 const formData = reactive({
   id: null,
+  userId: null,
   realName: '',
   gender: 1,
   phone: '',
@@ -105,6 +106,7 @@ const handleReset = () => {
 const handleAdd = () => {
   dialogTitle.value = '添加员工'
   formData.id = null
+  formData.userId = null
   formData.realName = ''
   formData.gender = 1
   formData.phone = ''
@@ -118,6 +120,7 @@ const handleAdd = () => {
 const handleEdit = (row) => {
   dialogTitle.value = '编辑员工'
   formData.id = row.id
+  formData.userId = row.userId
   formData.realName = row.realName
   formData.gender = row.gender === 'MALE' ? 1 : (row.gender === 'FEMALE' ? 2 : 0)
   formData.phone = row.phone
@@ -133,19 +136,19 @@ const submitForm = async () => {
   await formRef.value.validate(async (valid) => {
     if (valid) {
       try {
-        if (formData.id) {
+        if (formData.userId) {
           const res = await updateEmployee(formData)
           if (res.success) {
             ElMessage.success('更新成功')
           } else {
-            ElMessage.error(res.message || '更新失败')
+            ElMessage.error(res.msg || '更新失败')
           }
         } else {
           const res = await addEmployee(formData)
           if (res.success) {
             ElMessage.success('添加成功')
           } else {
-            ElMessage.error(res.message || '添加失败')
+            ElMessage.error(res.msg || '添加失败')
           }
         }
         dialogVisible.value = false
