@@ -134,11 +134,19 @@ const submitForm = async () => {
     if (valid) {
       try {
         if (formData.id) {
-          await updateEmployee(formData)
-          ElMessage.success('更新成功')
+          const res = await updateEmployee(formData)
+          if (res.success) {
+            ElMessage.success('更新成功')
+          } else {
+            ElMessage.error(res.message || '更新失败')
+          }
         } else {
-          await addEmployee(formData)
-          ElMessage.success('添加成功')
+          const res = await addEmployee(formData)
+          if (res.success) {
+            ElMessage.success('添加成功')
+          } else {
+            ElMessage.error(res.message || '添加失败')
+          }
         }
         dialogVisible.value = false
         getList()
