@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Refresh, Plus, Edit, Delete, View } from '@element-plus/icons-vue'
+import { Search, Refresh, Plus, Edit, Delete, View, Money } from '@element-plus/icons-vue'
 import { getOrderList, getOrderDetail, addOrder, updateOrder, updateOrderStatus, deleteOrder, dispatchOrder, refundOrder } from '@/api/order'
 import { getNotWorkingEmployees } from '@/api/employee'
 import { getMessages } from '@/api/message'
@@ -315,10 +315,10 @@ onMounted(() => {
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="180" fixed="right">
+        <el-table-column label="操作" align="center" width="210" fixed="right">
           <template #default="scope">
             <el-button link type="primary" :icon="View" @click="handleView(scope.row)">详情</el-button>
-            <el-button v-if="isRefundable(scope.row.status)" link type="warning" size="small" @click="handleRefund(scope.row)">退款</el-button>
+            <el-button v-if="isRefundable(scope.row.status)" link type="warning" :icon="Money" @click="handleRefund(scope.row)">退款</el-button>
             <el-button link type="danger" :icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
