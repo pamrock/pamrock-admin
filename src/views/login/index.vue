@@ -3,7 +3,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/store/modules/user'
 import { ElMessage } from 'element-plus'
-import { User, Lock } from '@element-plus/icons-vue'
+import { User, Lock, Key } from '@element-plus/icons-vue'
 import { login } from '@/api/login'
 
 const router = useRouter()
@@ -12,13 +12,19 @@ const userStore = useUserStore()
 
 const loginForm = reactive({
   username: '',
-  password: ''
+  password: '',
+  captcha: ''
 })
+
+const rememberMe = ref(false)
+const captchaPlaceholder = ref('')
 
 onMounted(() => {
   if (route.query.session === 'expired') {
     ElMessage.error('登录状态已失效，请重新登录')
   }
+  loadRemembered()
+  refreshCaptcha()
 })
 
 const rules = {
@@ -35,9 +41,47 @@ const rules = {
 const formRef = ref()
 const loading = ref(false)
 
+const generateCaptchaPlaceholder = () => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  let code = ''
+  for (let i = 0; i < 4; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  captchaPlaceholder.value = code
+}
+
+const refreshCaptcha = () => {
+  generateCaptchaPlaceholder()
+}
+
+const loadRemembered = () => {
+  try {
+    const saved = localStorage.getItem('admin_remember')
+    if (saved) {
+      const data = JSON.parse(saved)
+      loginForm.username = data.username || ''
+      loginForm.password = data.password || ''
+      rememberMe.value = true
+    }
+  } catch (e) {
+    localStorage.removeItem('admin_remember')
+  }
+}
+
+const saveRemembered = () => {
+  if (rememberMe.value) {
+    localStorage.setItem('admin_remember', JSON.stringify({
+      username: loginForm.username,
+      password: loginForm.password
+    }))
+  } else {
+    localStorage.removeItem('admin_remember')
+  }
+}
+
 const handleLogin = async () => {
   if (!formRef.value) return
-  
+
   try {
     await formRef.value.validate()
     loading.value = true
@@ -48,8 +92,9 @@ const handleLogin = async () => {
     }
     const { data } = await login(loginData)
     const token = data.token
-    
+
     userStore.login(token)
+    saveRemembered()
     ElMessage.success('登录成功')
     router.push('/dashboard')
     loading.value = false
@@ -69,13 +114,15 @@ const handleRegister = () => {
       <div class="shape shape-1"></div>
       <div class="shape shape-2"></div>
       <div class="shape shape-3"></div>
+      <div class="grid-overlay"></div>
     </div>
 
     <div class="login-card">
       <div class="login-header">
         <div class="logo">
-          <div class="logo-img">Admin</div>
-          <h1>家政公司经营管理系统</h1>
+          <div class="logo-icon">📊</div>
+          <h1>家政经营管理系统</h1>
+          <p class="subtitle">OPERATION CENTER</p>
         </div>
       </div>
 
@@ -90,6 +137,7 @@ const handleRegister = () => {
             v-model="loginForm.username"
             placeholder="请输入用户名"
             :prefix-icon="User"
+            size="large"
             clearable
           />
         </el-form-item>
@@ -100,9 +148,29 @@ const handleRegister = () => {
             type="password"
             placeholder="请输入密码"
             :prefix-icon="Lock"
+            size="large"
             clearable
             show-password
           />
+        </el-form-item>
+
+        <el-form-item>
+          <div class="captcha-row">
+            <el-input
+              v-model="loginForm.captcha"
+              placeholder="验证码"
+              :prefix-icon="Key"
+              size="large"
+              class="captcha-input"
+            />
+            <div class="captcha-img" @click="refreshCaptcha">
+              <span class="captcha-placeholder">{{ captchaPlaceholder }}</span>
+            </div>
+          </div>
+        </el-form-item>
+
+        <el-form-item>
+          <el-checkbox v-model="rememberMe">记住密码</el-checkbox>
         </el-form-item>
 
         <el-form-item>
@@ -122,10 +190,6 @@ const handleRegister = () => {
           还没有账号？立即注册
         </el-link>
       </div>
-
-      <div class="tips">
-        <p>演示账号：admin / 123456</p>
-      </div>
     </div>
   </div>
 </template>
@@ -137,7 +201,7 @@ const handleRegister = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
   overflow: hidden;
   position: relative;
 }
@@ -149,48 +213,45 @@ const handleRegister = () => {
   overflow: hidden;
 }
 
+.grid-overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0.06;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
 .shape {
   position: absolute;
-  opacity: 0.1;
-  animation: float 6s ease-in-out infinite;
+  border-radius: 50%;
+  opacity: 0.06;
 }
 
 .shape-1 {
   width: 300px;
   height: 300px;
-  background: #fff;
-  border-radius: 50%;
-  top: -50px;
-  left: -50px;
+  background: #537fe7;
+  top: -100px;
+  right: -80px;
 }
 
 .shape-2 {
   width: 200px;
   height: 200px;
-  background: #fff;
-  border-radius: 50%;
-  bottom: -100px;
-  right: -100px;
-  animation-delay: 2s;
+  background: #537fe7;
+  bottom: -80px;
+  left: -60px;
 }
 
 .shape-3 {
   width: 250px;
   height: 250px;
-  background: #fff;
-  bottom: 200px;
-  right: 50px;
-  border-radius: 50%;
-  animation-delay: 4s;
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(30px);
-  }
+  background: #99b8ff;
+  bottom: 180px;
+  left: 40px;
+  opacity: 0.04;
 }
 
 .login-card {
@@ -198,27 +259,18 @@ const handleRegister = () => {
   z-index: 10;
   width: 100%;
   max-width: 400px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  padding: 40px;
-  animation: slideUp 0.5s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
+  padding: 36px 36px 28px;
+  border: 1px solid rgba(255,255,255,0.2);
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 28px;
 }
 
 .logo {
@@ -228,46 +280,78 @@ const handleRegister = () => {
   gap: 10px;
 }
 
-.logo-img {
-  width: 50px;
-  height: 50px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
+.logo-icon {
+  font-size: 32px;
 }
 
 .login-header h1 {
   margin: 0;
-  color: #333;
-  font-size: 20px;
+  color: #1a1a2e;
+  font-size: 18px;
   font-weight: 600;
 }
 
+.login-header .subtitle {
+  font-size: 10px;
+  color: #95a5a6;
+  letter-spacing: 3px;
+  margin: 0;
+}
+
+.captcha-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.captcha-input {
+  flex: 1;
+}
+
+.captcha-img {
+  width: 100px;
+  height: 40px;
+  background: linear-gradient(135deg, #e8edf2, #d5dde5);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.captcha-placeholder {
+  font-size: 18px;
+  font-weight: bold;
+  color: #1a1a2e;
+  letter-spacing: 4px;
+  font-style: italic;
+}
+
 :deep(.el-form-item) {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 :deep(.el-input__wrapper) {
   background-color: #f5f7fa;
+  box-shadow: none !important;
+  border-radius: 10px;
 }
 
 :deep(.el-input__prefix) {
-  color: #999;
+  color: #b0b8c1;
 }
 
 .login-btn {
   width: 100%;
-  height: 40px;
-  font-size: 16px;
+  height: 42px;
+  font-size: 15px;
   letter-spacing: 2px;
-  margin-top: 10px;
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  background: linear-gradient(135deg, #1a1a2e, #0f3460);
   border: none;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(15,52,96,0.35);
 }
 
 .login-btn:hover {
@@ -276,20 +360,6 @@ const handleRegister = () => {
 
 .login-footer {
   text-align: center;
-  margin-top: 20px;
-}
-
-.tips {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
-  text-align: center;
-  font-size: 12px;
-  color: #999;
-}
-
-.tips p {
-  margin: 0;
-  line-height: 1.5;
+  margin-top: 8px;
 }
 </style>
