@@ -352,7 +352,7 @@ onMounted(() => {
               </el-descriptions-item>
               <el-descriptions-item label="客户ID">{{ currentOrder.customerId }}</el-descriptions-item>
               <el-descriptions-item label="员工姓名">
-                {{ currentOrder.employeeRealName }}
+                {{ currentDetail.employeeRealName }}
                 <el-button
                   v-if="!currentOrder.employeeId"
                   type="primary"
