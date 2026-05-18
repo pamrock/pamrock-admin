@@ -4,7 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/store/modules/user'
 import { ElMessage } from 'element-plus'
 import { User, Lock, Key } from '@element-plus/icons-vue'
-import { login } from '@/api/login'
+import { login, getCaptcha } from '@/api/login'
 
 const router = useRouter()
 const route = useRoute()
@@ -17,7 +17,8 @@ const loginForm = reactive({
 })
 
 const rememberMe = ref(false)
-const captchaPlaceholder = ref('')
+const captchaId = ref('')
+const captchaUrl = ref('')
 
 onMounted(() => {
   if (route.query.session === 'expired') {
@@ -41,17 +42,15 @@ const rules = {
 const formRef = ref()
 const loading = ref(false)
 
-const generateCaptchaPlaceholder = () => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  let code = ''
-  for (let i = 0; i < 4; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length))
+const refreshCaptcha = async () => {
+  try {
+    const res = await getCaptcha()
+    const captchaData = res.data.data || res.data
+    captchaId.value = captchaData.captchaId
+    captchaUrl.value = captchaData.captchaImage
+  } catch (e) {
+    console.error('获取验证码失败', e)
   }
-  captchaPlaceholder.value = code
-}
-
-const refreshCaptcha = () => {
-  generateCaptchaPlaceholder()
 }
 
 const loadRemembered = () => {
@@ -88,7 +87,9 @@ const handleLogin = async () => {
 
     const loginData = {
       username: loginForm.username,
-      password: loginForm.password
+      password: loginForm.password,
+      captchaId: captchaId.value,
+      captchaCode: loginForm.captcha
     }
     const { data } = await login(loginData)
     const token = data.token
@@ -164,7 +165,8 @@ const handleRegister = () => {
               class="captcha-input"
             />
             <div class="captcha-img" @click="refreshCaptcha">
-              <span class="captcha-placeholder">{{ captchaPlaceholder }}</span>
+              <img v-if="captchaUrl" :src="captchaUrl" alt="验证码" class="captcha-image" />
+              <span v-else class="captcha-loading">点击获取</span>
             </div>
           </div>
         </el-form-item>
@@ -321,12 +323,14 @@ const handleRegister = () => {
   user-select: none;
 }
 
-.captcha-placeholder {
-  font-size: 18px;
-  font-weight: bold;
-  color: #1a1a2e;
-  letter-spacing: 4px;
-  font-style: italic;
+.captcha-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.captcha-loading {
+  font-size: 13px;
+  color: #95a5a6;
 }
 
 :deep(.el-form-item) {

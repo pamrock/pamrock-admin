@@ -1,17 +1,15 @@
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
-const captchaPlaceholder = ref('')
 
 const registerForm = reactive({
   username: '',
   email: '',
   password: '',
-  confirmPassword: '',
-  captcha: ''
+  confirmPassword: ''
 })
 
 const validateConfirmPassword = (rule, value, callback) => {
@@ -45,23 +43,6 @@ const rules = {
 
 const formRef = ref()
 const loading = ref(false)
-
-const generateCaptchaPlaceholder = () => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  let code = ''
-  for (let i = 0; i < 4; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  captchaPlaceholder.value = code
-}
-
-const refreshCaptcha = () => {
-  generateCaptchaPlaceholder()
-}
-
-onMounted(() => {
-  refreshCaptcha()
-})
 
 const handleRegister = async () => {
   if (!formRef.value) return
@@ -152,21 +133,6 @@ const handleBackLogin = () => {
             clearable
             show-password
           />
-        </el-form-item>
-
-        <el-form-item>
-          <div class="captcha-row">
-            <el-input
-              v-model="registerForm.captcha"
-              placeholder="验证码"
-              prefix-icon="Key"
-              size="large"
-              class="captcha-input"
-            />
-            <div class="captcha-img" @click="refreshCaptcha">
-              <span class="captcha-placeholder">{{ captchaPlaceholder }}</span>
-            </div>
-          </div>
         </el-form-item>
 
         <el-form-item>
@@ -292,37 +258,6 @@ const handleBackLogin = () => {
   color: #95a5a6;
   letter-spacing: 3px;
   margin: 0;
-}
-
-.captcha-row {
-  display: flex;
-  gap: 10px;
-  width: 100%;
-}
-
-.captcha-input {
-  flex: 1;
-}
-
-.captcha-img {
-  width: 100px;
-  height: 40px;
-  background: linear-gradient(135deg, #e8edf2, #d5dde5);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  user-select: none;
-}
-
-.captcha-placeholder {
-  font-size: 18px;
-  font-weight: bold;
-  color: #1a1a2e;
-  letter-spacing: 4px;
-  font-style: italic;
 }
 
 :deep(.el-form-item) {
