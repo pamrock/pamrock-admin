@@ -76,7 +76,7 @@ function buildCategoryChartOption(data) {
       emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
       data: list.map(item => ({
         name: item.categoryName,
-        value: item.amount
+        value: item.count
       }))
     }]
   }
