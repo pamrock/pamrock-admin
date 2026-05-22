@@ -34,7 +34,7 @@ function buildOrderChartOption(data) {
     yAxis: { type: 'value', minInterval: 1 },
     series: [{
       name: '订单量', type: 'line',
-      data: data?.values || [],
+      data: data?.current || [],
       smooth: true,
       areaStyle: { color: 'rgba(102,126,234,0.15)' },
       lineStyle: { color: '#667eea' },
@@ -51,7 +51,7 @@ function buildRevenueChartOption(data) {
     yAxis: { type: 'value' },
     series: [{
       name: '营收(元)', type: 'line',
-      data: data?.values || [],
+      data: data?.current || [],
       smooth: true,
       areaStyle: { color: 'rgba(240,147,213,0.15)' },
       lineStyle: { color: '#f093d5' },
@@ -61,7 +61,7 @@ function buildRevenueChartOption(data) {
 }
 
 function buildCategoryChartOption(data) {
-  const list = Array.isArray(data) ? data : (data?.list || [])
+  const list = data?.items || []
   return {
     tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
     legend: { orient: 'vertical', right: 5, top: 'center' },
@@ -75,8 +75,8 @@ function buildCategoryChartOption(data) {
       label: { show: false },
       emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
       data: list.map(item => ({
-        name: item.name || item.categoryName,
-        value: item.value || item.orderCount
+        name: item.categoryName,
+        value: item.amount
       }))
     }]
   }
@@ -91,7 +91,7 @@ async function loadAllData() {
       getDashboard(),
       getOrderTrend(trendParams),
       getRevenueTrend(trendParams),
-      getServiceCategoryDistribution(),
+      getServiceCategoryDistribution({ startDate: thirtyDaysAgo, endDate: today }),
       getOrderList({ pageNo: 1, pageSize: 10 })
     ])
 
@@ -178,7 +178,7 @@ onMounted(() => {
           <template #header><span>最近订单</span></template>
           <el-table :data="recentOrders" style="width: 100%" size="small" max-height="360">
             <el-table-column prop="orderId" label="订单号" min-width="100" show-overflow-tooltip />
-            <el-table-column prop="customerName" label="客户" min-width="80" show-overflow-tooltip />
+            <el-table-column prop="employeeRealName" label="员工" min-width="80" show-overflow-tooltip />
             <el-table-column prop="totalAmount" label="金额" min-width="80">
               <template #default="{ row }">¥{{ row.totalAmount ?? '--' }}</template>
             </el-table-column>
