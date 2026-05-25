@@ -60,12 +60,24 @@ const iconList = [
   'Picture', 'Mug', 'Trophy', 'Sunny', 'Cloudy', 'Moon', 'Sunrise', 'Sunset'
 ]
 
+/** 递归按 orderNum 排序菜单树（同层级内排序） */
+function sortMenuTree(tree) {
+  if (!tree || !tree.length) return tree
+  const sorted = [...tree].sort((a, b) => (a.orderNum ?? 0) - (b.orderNum ?? 0))
+  for (const node of sorted) {
+    if (node.children && node.children.length) {
+      node.children = sortMenuTree(node.children)
+    }
+  }
+  return sorted
+}
+
 /** 查询菜单列表 */
 function getList() {
   loading.value = true
   getMenuList(queryParams).then(response => {
     if (response.success) {
-      menuList.value = response.data
+      menuList.value = sortMenuTree(response.data)
     }else{
       ElMessage.error(response.msg)
     }
@@ -95,7 +107,7 @@ function getTreeselect() {
   getMenuList(queryParams).then(response => {
     if (response.success) {
     const menu = { id: 0, menuName: '主类目', children: [] }
-    menu.children = response.data
+    menu.children = sortMenuTree(response.data)
     menuOptions.value.push(menu)
     }else{
       ElMessage.error(response.msg)
