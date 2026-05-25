@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getNotificationList, markNotificationRead, markAllNotificationRead } from '@/api/notification'
 import { useNotificationStore } from '@/store/modules/notification'
@@ -36,14 +36,9 @@ const notificationStore = useNotificationStore()
 const notifications = ref([])
 const unreadCount = ref(0)
 
-const props = defineProps({
-  visible: Boolean
-})
-
-watch(() => props.visible, async (v) => {
-  if (v) {
-    await loadList()
-  }
+// Load on mount + re-load when popover opens (popover remounts component each time)
+onMounted(() => {
+  loadList()
 })
 
 async function loadList() {
