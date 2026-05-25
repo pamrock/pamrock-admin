@@ -74,7 +74,7 @@ async function handleReadAll() {
 
 function handleViewAll() {
   emit('close')
-  router.push('/notification')
+  router.push('/notification/index')
 }
 </script>
 
