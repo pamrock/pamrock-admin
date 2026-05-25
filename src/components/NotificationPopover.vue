@@ -25,10 +25,10 @@
           @click.stop="handleMarkRead(item)"
         >已读</el-button>
       </div>
-      <div class="noti-view-all" @click="handleViewAll">查看全部 →</div>
     </div>
     <el-empty v-else description="暂无通知" :image-size="60" />
   </div>
+  <div class="noti-view-all" @click="handleViewAll">查看全部 →</div>
 </template>
 
 <script setup>
