@@ -12,7 +12,7 @@
         :class="{ unread: item.isRead === 0 }"
       >
         <span v-if="item.isRead === 0" class="noti-dot"></span>
-        <div class="noti-body">
+        <div class="noti-body" @click="handleItemClick(item)">
           <div class="noti-item-title">{{ item.title }}</div>
           <div class="noti-item-content">{{ item.content }}</div>
           <div class="noti-item-time">{{ item.createTime }}</div>
@@ -27,7 +27,7 @@
       </div>
     </div>
     <el-empty v-else description="暂无通知" :image-size="60" />
-    <div class="noti-view-all" @click="handleViewAll">查看全部 →</div>
+    <div class="noti-view-all" @click="handleViewAll">查看全部</div>
   </div>
 </template>
 
@@ -50,18 +50,27 @@ onMounted(() => {
 async function loadList() {
   try {
     const res = await getNotificationList({ pageNo: 1, pageSize: 20 })
-    const all = res.records || []
-    // Only show unread in popover
-    notifications.value = all.filter(n => n.isRead === 0)
+    notifications.value = res.records || []
     unreadCount.value = res.unreadCount ?? 0
   } catch (e) {
     // silent
   }
 }
 
+async function handleItemClick(item) {
+  if (item.isRead === 0) {
+    await markNotificationRead({ id: item.id })
+    item.isRead = 1
+    notificationStore.fetchUnreadCount()
+  }
+  if (item.refId) {
+    emit('close')
+    router.push('/order')
+  }
+}
+
 async function handleMarkRead(item) {
   await markNotificationRead({ id: item.id })
-  // Remove from popover list
   notifications.value = notifications.value.filter(n => n.id !== item.id)
   notificationStore.fetchUnreadCount()
 }
@@ -87,7 +96,7 @@ function handleViewAll() {
 .noti-item:hover { background: #fafafa; }
 .noti-item.unread { background: #fafcff; }
 .noti-dot { width: 6px; height: 6px; border-radius: 50%; background: #f56c6c; margin-top: 6px; flex-shrink: 0; }
-.noti-body { flex: 1; min-width: 0; }
+.noti-body { flex: 1; min-width: 0; cursor: pointer; }
 .noti-item-title { font-size: 13px; font-weight: 500; color: #303133; margin-bottom: 2px; }
 .noti-item-content { font-size: 12px; color: #909399; line-height: 1.4; margin-bottom: 4px; }
 .noti-item-time { font-size: 11px; color: #c0c4cc; }
@@ -98,7 +107,6 @@ function handleViewAll() {
   color: var(--el-color-primary, #409eff);
   cursor: pointer;
   border-top: 1px solid #f0f0f0;
-  margin-top: 4px;
 }
 .noti-view-all:hover {
   color: var(--el-color-primary-light-3, #66b1ff);
