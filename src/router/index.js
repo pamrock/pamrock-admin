@@ -83,7 +83,22 @@ export const constantRoutes = [
         meta: { title: '我的订单', hidden: true }
       }
     ]
-  }
+  },
+  {
+    path: '/notification',
+    name: 'Notification',
+    component: Layout,
+    redirect: '/notification/index',
+    meta: { title: '通知中心', icon: 'bell', hidden: false },
+    children: [
+      {
+        path: 'index',
+        name: 'NotificationIndex',
+        component: () => import('@/views/notification/index.vue'),
+        meta: { title: '通知中心', affix: false }
+      }
+    ]
+  },
 ]
 
 const router = createRouter({
