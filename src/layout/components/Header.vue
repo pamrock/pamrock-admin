@@ -3,9 +3,11 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/store/modules/user'
 import { useAppStore } from '@/store/modules/app'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { logout } from '@/api/login'
 import { updatePassword } from '@/api/user'
+import NotificationPopover from '@/components/NotificationPopover.vue'
+import { useNotificationStore } from '@/store/modules/notification'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -19,6 +21,23 @@ const passwordForm = reactive({
   oldPassword: '',
   newPassword: '',
   confirmPassword: ''
+})
+
+const notificationStore = useNotificationStore()
+let pollTimer = null
+
+onMounted(() => {
+  notificationStore.fetchUnreadCount()
+  pollTimer = setInterval(() => {
+    notificationStore.fetchUnreadCount()
+  }, 30000)
+})
+
+onUnmounted(() => {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
 })
 
 const validatePass2 = (rule, value, callback) => {
@@ -129,10 +148,15 @@ const handleMyOrders = () => {
         <component :is="appStore.isDark ? 'Sunny' : 'Moon'" />
       </el-icon>
 
-      <!-- 消息 -->
-      <el-icon class="header-icon">
-        <Bell />
-      </el-icon>
+      <!-- 消息通知 -->
+      <el-popover placement="bottom-end" :width="360" trigger="click">
+        <template #reference>
+          <el-badge :value="notificationStore.unreadCount" :hidden="notificationStore.unreadCount === 0" :max="99">
+            <el-icon class="header-icon"><Bell /></el-icon>
+          </el-badge>
+        </template>
+        <NotificationPopover />
+      </el-popover>
 
       <!-- 用户菜单 -->
       <el-dropdown class="user-dropdown">
