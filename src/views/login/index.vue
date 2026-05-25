@@ -91,8 +91,12 @@ const handleLogin = async () => {
       captchaId: captchaId.value,
       captchaCode: loginForm.captcha
     }
-    const { data } = await login(loginData)
-    const token = data.token
+    const data = await login(loginData)
+    if (!data.success) {
+      ElMessage.error(data.msg || '登录失败')
+      return
+    }
+    const token = data.data.token
 
     userStore.login(token)
     saveRemembered()
