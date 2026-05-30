@@ -107,7 +107,7 @@ function getStatusType(status) {
 }
 
 function isRefundable(status) {
-  return status === '2' || status === '3'
+  return status === '2' || status === '3' || status === '4' || status === '5'
 }
 
 function handleRefund(row) {
@@ -379,6 +379,7 @@ onMounted(() => {
               <el-descriptions-item label="实际开始时间">{{ currentDetail.actualStartTime }}</el-descriptions-item>
               <el-descriptions-item label="实际结束时间">{{ currentDetail.actualEndTime }}</el-descriptions-item>
               <el-descriptions-item label="取消原因" v-if="currentDetail.cancelReason">{{ currentDetail.cancelReason }}</el-descriptions-item>
+              <el-descriptions-item label="备注">{{ currentDetail.remark || '无' }}</el-descriptions-item>
             </el-descriptions>
 
             <el-divider />
