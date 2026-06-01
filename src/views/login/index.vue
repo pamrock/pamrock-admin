@@ -94,6 +94,8 @@ const handleLogin = async () => {
     const data = await login(loginData)
     if (!data.success) {
       ElMessage.error(data.msg || '登录失败')
+      loading.value = false
+      refreshCaptcha()
       return
     }
     const token = data.data.token
