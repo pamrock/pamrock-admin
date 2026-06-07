@@ -52,7 +52,7 @@ const getSubMenuIndex = (menu, menuIndex) => {
 <template>
   <div class="sidebar">
     <div class="logo">
-      <div class="logo-img">Admin</div>
+      <img src="/housekeeping_icon.png" class="logo-img" alt="logo" />
       <span class="logo-text" v-show="appStore.sidebar.opened">家政公司经营管理系统</span>
     </div>
     
@@ -162,13 +162,7 @@ const getSubMenuIndex = (menu, menuIndex) => {
   width: 40px;
   height: 40px;
   border-radius: 4px;
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #F8F9FA;
-  font-weight: bold;
-  font-size: 8px;
+  object-fit: contain;
   flex-shrink: 0;
 }
 

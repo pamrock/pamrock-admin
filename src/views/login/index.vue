@@ -127,7 +127,7 @@ const handleRegister = () => {
     <div class="login-card">
       <div class="login-header">
         <div class="logo">
-          <div class="logo-icon">📊</div>
+          <img src="/housekeeping_icon.png" class="logo-icon" alt="logo" />
           <h1>家政经营管理系统</h1>
           <p class="subtitle">OPERATION CENTER</p>
         </div>
@@ -289,7 +289,9 @@ const handleRegister = () => {
 }
 
 .logo-icon {
-  font-size: 32px;
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
 }
 
 .login-header h1 {

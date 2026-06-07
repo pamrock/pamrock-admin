@@ -78,7 +78,7 @@ const handleBackLogin = () => {
     <div class="register-card">
       <div class="register-header">
         <div class="logo">
-          <div class="logo-icon">📊</div>
+          <img src="/housekeeping_icon.png" class="logo-icon" alt="logo" />
           <h1>注册账号</h1>
           <p class="subtitle">ADMIN REGISTER</p>
         </div>
